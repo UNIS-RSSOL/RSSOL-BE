@@ -38,3 +38,7 @@ ETC: Validation, Lombok, Spring Boot DevTools
 
 서버 실행 후 API는 기본적으로 http://localhost:8080
  에서 확인할 수 있습니다.
+
+
+# 예시 문구 추가
+협업 플로우 테스트용 문장 추가
