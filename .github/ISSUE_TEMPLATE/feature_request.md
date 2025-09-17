@@ -1,5 +1,5 @@
 ---
-name: "✨ Feature Request"
+name: "Feature Request"
 about: 새로운 기능 개발 요청을 기록합니다.
 title: "[FEAT] "
 labels: ["FEAT"]
