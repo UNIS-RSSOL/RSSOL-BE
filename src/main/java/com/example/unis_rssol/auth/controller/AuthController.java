@@ -15,13 +15,12 @@ public class AuthController {
     private final AuthService authService;
 
     /**
-     * Google/Naver/Kakao OAuth2 Redirect 콜백
+     * 카카오 OAuth2 Redirect 콜백
+     * 프론트에서 받은 code를 백엔드가 처리
      */
-    @GetMapping("/{provider}/callback")
-    public ResponseEntity<LoginResponse> callback(
-            @PathVariable String provider,
-            @RequestParam("code") String code) {
-        return ResponseEntity.ok(authService.handleCallback(provider, code));
+    @GetMapping("/kakao/callback")
+    public ResponseEntity<LoginResponse> kakaoCallback(@RequestParam("code") String code) {
+        return ResponseEntity.ok(authService.handleKakaoCallback(code));
     }
 
     /**

@@ -1,24 +1,14 @@
 package com.example.unis_rssol.auth.service.provider;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.json.JSONObject;
 import org.springframework.http.*;
-import org.springframework.util.MultiValueMap;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import org.json.JSONObject;
 
 @Component
 public class KakaoProvider implements SocialProvider {
-
-    @Value("${oauth.kakao.client-id}")
-    private String clientId;
-
-    @Value("${oauth.kakao.client-secret}")
-    private String clientSecret;
-
-    @Value("${oauth.kakao.redirect-uri}")
-    private String redirectUri;
+    private static final String TOKEN_URL = "https://kauth.kakao.com/oauth/token";
+    private static final String PROFILE_URL = "https://kapi.kakao.com/v2/user/me";
 
     private final RestTemplate rt = new RestTemplate();
 
@@ -29,30 +19,48 @@ public class KakaoProvider implements SocialProvider {
 
     @Override
     public String getAccessTokenFromCode(String code) {
-        String url = "https://kauth.kakao.com/oauth/token";
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("grant_type", "authorization_code");
-        params.add("client_id", clientId);
-        params.add("client_secret", clientSecret);
-        params.add("redirect_uri", redirectUri);
-        params.add("code", code);
-
-        ResponseEntity<String> res = rt.postForEntity(url, new HttpEntity<>(params, new HttpHeaders()), String.class);
-        return new JSONObject(res.getBody()).getString("access_token");
+        // 👉 이 부분은 client_id, redirect_uri 등 application.yml 값 읽어와서 추가해야 함
+        throw new UnsupportedOperationException("카카오는 별도 AccessToken 발급 로직 필요 (추가 구현)");
     }
 
     @Override
     public SocialProfile fetchProfile(String accessToken) {
-        String url = "https://kapi.kakao.com/v2/user/me";
-        HttpHeaders h = new HttpHeaders();
-        h.setBearerAuth(accessToken);
-        ResponseEntity<String> res = rt.exchange(url, HttpMethod.GET, new HttpEntity<>(h), String.class);
-        JSONObject body = new JSONObject(res.getBody());
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
+        headers.set("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
+
+        ResponseEntity<String> response = rt.exchange(
+                PROFILE_URL,
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                String.class
+        );
+
+        JSONObject body = new JSONObject(response.getBody());
+
         String id = String.valueOf(body.getLong("id"));
-        String username = body.getJSONObject("kakao_account")
-                .getJSONObject("profile")
-                .optString("nickname", null);
-        String phone = body.getJSONObject("kakao_account").optString("phone_number", null);
-        return new SocialProfile("kakao", id, username, phone != null ? phone.replace("+82 ", "0") : null);
+        String nickname = null;
+        String email = null;
+        String profileImage = null;
+
+        if (body.has("kakao_account")) {
+            var account = body.getJSONObject("kakao_account");
+            if (account.has("profile")) {
+                var profile = account.getJSONObject("profile");
+                nickname = profile.optString("nickname", null);
+                profileImage = profile.optString("profile_image_url", null);
+            }
+            if (account.has("email")) {
+                email = account.optString("email", null);
+            }
+        }
+
+        return new SocialProfile(
+                "kakao",
+                id,
+                nickname,
+                email,
+                profileImage
+        );
     }
 }
