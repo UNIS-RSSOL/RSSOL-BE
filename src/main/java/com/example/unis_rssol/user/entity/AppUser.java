@@ -20,6 +20,9 @@ public class AppUser {
     @Column(name = "provider_id")
     private String providerId;          // 카카오 회원 고유 ID
 
+    @Column(name = "active_store_id")
+    private Long activeStoreId;  // 현재 선택(활성)된 매장 ID
+
     @Enumerated(EnumType.STRING)
     private Status status = Status.ACTIVE;
     public enum Status { ACTIVE, DORMANT, WITHDRAWN }

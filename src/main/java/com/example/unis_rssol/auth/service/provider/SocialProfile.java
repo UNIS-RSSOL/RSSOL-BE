@@ -1,12 +1,18 @@
 package com.example.unis_rssol.auth.service.provider;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-@Getter @AllArgsConstructor
+@Getter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class SocialProfile {
-    private final String provider;       // kakao
-    private final String providerId;     // 카카오 회원 고유 id
-    private final String username;       // 닉네임
-    private final String email;          // 이메일
-    private final String profileImageUrl;// 프로필 사진 URL
+    private String provider;        // "kakao"
+    private String providerId;      // 카카오 id
+    private String username;        // 닉네임
+    private String email;           // 이메일 (동의/검증된 경우)
+    private String profileImageUrl; // 프로필 이미지
 }

@@ -1,6 +1,5 @@
 package com.example.unis_rssol.store.service;
 
-import com.example.unis_rssol.global.StoreCodeGenerator;
 import com.example.unis_rssol.store.dto.*;
 import com.example.unis_rssol.store.entity.Store;
 import com.example.unis_rssol.store.entity.UserStore;
@@ -8,6 +7,7 @@ import com.example.unis_rssol.store.repository.StoreRepository;
 import com.example.unis_rssol.store.repository.UserStoreRepository;
 import com.example.unis_rssol.user.entity.AppUser;
 import com.example.unis_rssol.user.repository.AppUserRepository;
+import com.example.unis_rssol.global.util.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

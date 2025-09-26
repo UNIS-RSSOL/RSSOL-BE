@@ -1,66 +1,130 @@
 package com.example.unis_rssol.auth.service.provider;
 
-import org.json.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+@Slf4j
 @Component
-public class KakaoProvider implements SocialProvider {
+public class KakaoProvider {
+
+    @Value("${oauth.kakao.client-id}")
+    private String clientId;
+
+    @Value("${oauth.kakao.client-secret:}")
+    private String clientSecret;
+
+    @Value("${oauth.kakao.redirect-uri}")
+    private String redirectUri;
+
     private static final String TOKEN_URL = "https://kauth.kakao.com/oauth/token";
     private static final String PROFILE_URL = "https://kapi.kakao.com/v2/user/me";
 
-    private final RestTemplate rt = new RestTemplate();
+    private final RestTemplate restTemplate = new RestTemplate();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Override
-    public boolean supports(String provider) {
-        return "kakao".equalsIgnoreCase(provider);
-    }
-
-    @Override
+    /**
+     * 인가코드(code) -> Kakao AccessToken 교환
+     */
     public String getAccessTokenFromCode(String code) {
-        // 👉 이 부분은 client_id, redirect_uri 등 application.yml 값 읽어와서 추가해야 함
-        throw new UnsupportedOperationException("카카오는 별도 AccessToken 발급 로직 필요 (추가 구현)");
-    }
+        log.info("🔑 [KakaoProvider] Authorization Code 수신: {}", code);
+        log.info("   [Check] client_id={}, redirect_uri={}, client_secret={}",
+                clientId, redirectUri, (clientSecret == null || clientSecret.isBlank()) ? "(없음)" : "(설정됨)");
 
-    @Override
-    public SocialProfile fetchProfile(String accessToken) {
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(accessToken);
-        headers.set("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        ResponseEntity<String> response = rt.exchange(
-                PROFILE_URL,
-                HttpMethod.GET,
-                new HttpEntity<>(headers),
-                String.class
-        );
-
-        JSONObject body = new JSONObject(response.getBody());
-
-        String id = String.valueOf(body.getLong("id"));
-        String nickname = null;
-        String email = null;
-        String profileImage = null;
-
-        if (body.has("kakao_account")) {
-            var account = body.getJSONObject("kakao_account");
-            if (account.has("profile")) {
-                var profile = account.getJSONObject("profile");
-                nickname = profile.optString("nickname", null);
-                profileImage = profile.optString("profile_image_url", null);
-            }
-            if (account.has("email")) {
-                email = account.optString("email", null);
-            }
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("grant_type", "authorization_code");
+        params.add("client_id", clientId);
+        params.add("redirect_uri", redirectUri);
+        params.add("code", code);
+        if (clientSecret != null && !clientSecret.isBlank()) {
+            params.add("client_secret", clientSecret);
         }
 
-        return new SocialProfile(
-                "kakao",
-                id,
-                nickname,
-                email,
-                profileImage
-        );
+        log.info("📤 [KakaoProvider] 카카오로 전송할 파라미터={}", params);
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(TOKEN_URL, request, String.class);
+            log.debug("📩 [KakaoProvider] 토큰 응답 바디: {}", response.getBody());
+
+            JsonNode root = objectMapper.readTree(response.getBody());
+            JsonNode accessTokenNode = root.get("access_token");
+            if (accessTokenNode == null) {
+                log.error("❌ [KakaoProvider] access_token 없음: {}", response.getBody());
+                throw new IllegalArgumentException("카카오 access_token 파싱 실패");
+            }
+            String accessToken = accessTokenNode.asText();
+            log.info("✅ [KakaoProvider] access_token 발급 성공");
+            return accessToken;
+
+        } catch (HttpClientErrorException e) {
+            log.error("❌ [KakaoProvider] 토큰 요청 4xx 에러: status={}, body={}",
+                    e.getStatusCode(), e.getResponseBodyAsString());
+            throw new IllegalArgumentException("카카오 토큰 요청 실패", e);
+        } catch (Exception e) {
+            log.error("❌ [KakaoProvider] 토큰 요청 실패", e);
+            throw new IllegalArgumentException("카카오 토큰 요청 실패", e);
+        }
+    }
+
+    /**
+     * Kakao AccessToken -> 사용자 프로필
+     */
+    public SocialProfile fetchProfile(String accessToken) {
+        log.info("🔍 [KakaoProvider] 프로필 요청 시작 (Bearer 토큰 사용)");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
+
+        HttpEntity<Void> request = new HttpEntity<>(headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    PROFILE_URL, HttpMethod.GET, request, String.class);
+            log.debug("📩 [KakaoProvider] 프로필 응답 바디: {}", response.getBody());
+
+            JsonNode root = objectMapper.readTree(response.getBody());
+
+            String id = root.path("id").asText(); // 필수
+            String nickname = root.path("properties").path("nickname").asText(null);
+            if (nickname == null || nickname.isBlank()) {
+                nickname = root.path("kakao_account").path("profile").path("nickname").asText("");
+            }
+            String profileImage = root.path("properties").path("profile_image").asText(null);
+            if (profileImage == null || profileImage.isBlank()) {
+                profileImage = root.path("kakao_account").path("profile").path("profile_image_url").asText("");
+            }
+            String email = root.path("kakao_account").path("email").asText("");
+
+            SocialProfile profile = SocialProfile.builder()
+                    .provider("kakao")
+                    .providerId(id)
+                    .username(nickname == null ? "" : nickname)
+                    .email(email == null ? "" : email)
+                    .profileImageUrl(profileImage == null ? "" : profileImage)
+                    .build();
+
+            log.info("✅ [KakaoProvider] 프로필 파싱 성공: id={}, email={}, nickname={}", id, email, nickname);
+            return profile;
+
+        } catch (HttpClientErrorException e) {
+            log.error("❌ [KakaoProvider] 프로필 요청 4xx 에러: status={}, body={}",
+                    e.getStatusCode(), e.getResponseBodyAsString());
+            throw new IllegalArgumentException("카카오 프로필 요청 실패", e);
+        } catch (Exception e) {
+            log.error("❌ [KakaoProvider] 프로필 요청 실패", e);
+            throw new IllegalArgumentException("카카오 프로필 요청 실패", e);
+        }
     }
 }
