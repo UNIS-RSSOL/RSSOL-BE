@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -44,12 +43,10 @@ public class MypageServiceImpl implements MypageService {
     private UserStore resolveActiveMappingOrDefault(Long userId) {
         AppUser u = users.findById(userId).orElseThrow();
 
-        // activeStoreId가 설정되어 있으면 그 매핑을 우선
         if (u.getActiveStoreId() != null) {
             return ensureMapping(userId, u.getActiveStoreId());
         }
 
-        // 없으면 최초 등록 매장을 기본값으로
         return userStores.findFirstByUserIdOrderByCreatedAtAsc(userId)
                 .orElseThrow(() -> new IllegalArgumentException("등록된 매장이 없습니다."));
     }
@@ -94,7 +91,6 @@ public class MypageServiceImpl implements MypageService {
     @Override
     public ActiveStoreResponse updateActiveStore(Long userId, Long storeId) {
         AppUser u = users.findById(userId).orElseThrow();
-        // 권한/소속 검증
         ensureMapping(userId, storeId);
         u.setActiveStoreId(storeId);
         users.save(u);
@@ -102,7 +98,7 @@ public class MypageServiceImpl implements MypageService {
         return toActiveStoreResponse(ensureMapping(userId, storeId));
     }
 
-    // 사장님 마이페이지 관련
+    // 사장님 관련
 
     @Override
     @Transactional(readOnly = true)
@@ -138,7 +134,11 @@ public class MypageServiceImpl implements MypageService {
         if (req.getEmail() != null) u.setEmail(req.getEmail());
         users.save(u);
 
-        if (req.getBusinessRegistrationNumber() != null) {
+        if (req.getBusinessRegistrationNumber() != null
+                && !req.getBusinessRegistrationNumber().equals(s.getBusinessRegistrationNumber())) {
+            if (stores.existsByBusinessRegistrationNumber(req.getBusinessRegistrationNumber())) {
+                throw new IllegalArgumentException("이미 사용 중인 사업자 등록번호입니다.");
+            }
             s.setBusinessRegistrationNumber(req.getBusinessRegistrationNumber());
             stores.save(s);
         }
@@ -176,9 +176,16 @@ public class MypageServiceImpl implements MypageService {
         if (req.getName() != null) s.setName(req.getName());
         if (req.getAddress() != null) s.setAddress(req.getAddress());
         if (req.getPhoneNumber() != null) s.setPhoneNumber(req.getPhoneNumber());
-        if (req.getBusinessRegistrationNumber() != null) s.setBusinessRegistrationNumber(req.getBusinessRegistrationNumber());
-        stores.save(s);
 
+        if (req.getBusinessRegistrationNumber() != null
+                && !req.getBusinessRegistrationNumber().equals(s.getBusinessRegistrationNumber())) {
+            if (stores.existsByBusinessRegistrationNumber(req.getBusinessRegistrationNumber())) {
+                throw new IllegalArgumentException("이미 사용 중인 사업자 등록번호입니다.");
+            }
+            s.setBusinessRegistrationNumber(req.getBusinessRegistrationNumber());
+        }
+
+        stores.save(s);
         return getOwnerActiveStore(ownerId);
     }
 
@@ -197,7 +204,7 @@ public class MypageServiceImpl implements MypageService {
         AppUser owner = users.findById(ownerId).orElseThrow();
 
         Store store = Store.builder()
-                .storeCode(StoreCodeGenerator.generate()) // 매장 랜덤 코드 발급
+                .storeCode(StoreCodeGenerator.generate())
                 .name(req.getName())
                 .address(req.getAddress())
                 .phoneNumber(req.getPhoneNumber())
@@ -212,7 +219,6 @@ public class MypageServiceImpl implements MypageService {
                 .build();
         userStores.save(link);
 
-        // 등록 응답에서는 employmentStatus 제외 → null
         return StoreSimpleResponse.builder()
                 .storeId(store.getId())
                 .storeCode(store.getStoreCode())
@@ -221,7 +227,7 @@ public class MypageServiceImpl implements MypageService {
                 .phoneNumber(store.getPhoneNumber())
                 .businessRegistrationNumber(store.getBusinessRegistrationNumber())
                 .position("OWNER")
-                .employmentStatus(null)
+                .employmentStatus("HIRED")
                 .build();
     }
 
@@ -233,10 +239,8 @@ public class MypageServiceImpl implements MypageService {
         }
         userStores.delete(mapping);
 
-        // 활성 매장으로 설정돼 있었다면 재설정
         AppUser u = users.findById(ownerId).orElseThrow();
         if (storeId.equals(u.getActiveStoreId())) {
-            // 남은 매장 중 첫번째를 활성화, 없으면 null
             Long nextActive = userStores.findByUserId(ownerId).stream()
                     .findFirst()
                     .map(us -> us.getStore().getId())
@@ -246,22 +250,19 @@ public class MypageServiceImpl implements MypageService {
         }
     }
 
-    // 알바생 관련 마이페이지
+    // 알바생 관련
 
     @Override
     @Transactional(readOnly = true)
     public StaffProfileResponse getStaffProfile(Long staffId) {
         UserStore mapping = resolveActiveMappingOrDefault(staffId);
         if (mapping.getPosition() != Position.STAFF) {
-            // 알바생이 아니더라도, 활성 매장이 STAFF가 아닌 경우만 제한
-            // 상황에 따라 허용할지 정책 결정. 여기서는 제한
             throw new IllegalArgumentException("알바생 권한이 필요한 요청입니다.");
         }
 
         AppUser u = mapping.getUser();
         Store s = mapping.getStore();
 
-        // 최신(대표) 계좌
         BankAccount latest = accounts.findTopByUserIdOrderByIdDesc(staffId).orElse(null);
 
         return StaffProfileResponse.builder()
@@ -301,7 +302,6 @@ public class MypageServiceImpl implements MypageService {
             BankAccount latest = accounts.findTopByUserIdOrderByIdDesc(staffId).orElse(null);
 
             if (latest == null) {
-                // 신규 생성 (둘 중 하나라도 있으면 생성)
                 if (req.getBankId() != null && req.getAccountNumber() != null) {
                     Bank bank = banks.findById(req.getBankId())
                             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 은행입니다."));
@@ -312,7 +312,6 @@ public class MypageServiceImpl implements MypageService {
                             .build());
                 }
             } else {
-                // 최신 계좌 업데이트 (있을 경우)
                 if (req.getBankId() != null) {
                     Bank bank = banks.findById(req.getBankId())
                             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 은행입니다."));
@@ -353,7 +352,6 @@ public class MypageServiceImpl implements MypageService {
                 .build();
         userStores.save(link);
 
-        // 등록 응답에서는 employmentStatus 제외
         return StoreSimpleResponse.builder()
                 .storeId(store.getId())
                 .storeCode(store.getStoreCode())
@@ -362,7 +360,7 @@ public class MypageServiceImpl implements MypageService {
                 .phoneNumber(store.getPhoneNumber())
                 .businessRegistrationNumber(store.getBusinessRegistrationNumber())
                 .position("STAFF")
-                .employmentStatus(null)
+                .employmentStatus("HIRED")
                 .build();
     }
 
@@ -374,7 +372,6 @@ public class MypageServiceImpl implements MypageService {
         }
         userStores.delete(mapping);
 
-        // 활성 매장이면 재설정
         AppUser u = users.findById(staffId).orElseThrow();
         if (storeId.equals(u.getActiveStoreId())) {
             Long nextActive = userStores.findByUserId(staffId).stream()

@@ -26,7 +26,7 @@ public class JwtTokenProvider {
         return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
-    /** 액세스 토큰 발급 */
+    // 액세스 토큰 발급
     public String generateAccess(Long userId) {
         return Jwts.builder()
                 .setSubject(userId.toString())
@@ -36,7 +36,7 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    /** 리프레시 토큰 발급 */
+    // 리프레시 토큰 발급
     public String generateRefresh(Long userId) {
         return Jwts.builder()
                 .setSubject(userId.toString())
@@ -46,7 +46,7 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    /** 토큰 유효성 검증 */
+    // 토큰 유효성 검증
     public boolean validate(String token) {
         try {
             Jwts.parserBuilder()

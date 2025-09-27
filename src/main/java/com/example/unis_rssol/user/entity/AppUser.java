@@ -21,7 +21,10 @@ public class AppUser {
     private String providerId;          // 카카오 회원 고유 ID
 
     @Column(name = "active_store_id")
-    private Long activeStoreId;  // 현재 선택(활성)된 매장 ID
+    private Long activeStoreId;         // 현재 선택(활성)된 매장 ID
+
+    @Column(name = "kakao_access_token", length = 500)
+    private String kakaoAccessToken;
 
     @Enumerated(EnumType.STRING)
     private Status status = Status.ACTIVE;

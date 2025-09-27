@@ -11,8 +11,11 @@ import com.example.unis_rssol.user.entity.AppUser;
 import com.example.unis_rssol.user.repository.AppUserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 
@@ -24,14 +27,15 @@ public class AuthService {
     private final AppUserRepository users;
     private final UserRefreshTokenRepository refreshRepo;
     private final JwtTokenProvider jwt;
-    private final KakaoProvider kakao; // Provider 주입
+    private final KakaoProvider kakao;
 
-    /**
-     * 카카오 로그인 처리
-     */
+    private final RestTemplate restTemplate = new RestTemplate();
+    private static final String KAKAO_LOGOUT_URL = "https://kapi.kakao.com/v1/user/logout";
+
+    // 카카오 로그인 처리
     @Transactional
     public LoginResponse handleKakaoCallback(String code) {
-        log.info(" handleKakaoCallback called.");
+        log.info("handleKakaoCallback called.");
 
         // 1) code → accessToken
         String accessToken = kakao.getAccessTokenFromCode(code);
@@ -41,7 +45,7 @@ public class AuthService {
         String kakaoId = profile.getProviderId();
         log.info("Kakao profile fetched: id={}, email={}", kakaoId, profile.getEmail());
 
-        // 3) DB 저장 (신규만 저장, 기존은 덮어쓰지 않음)
+        // 3) DB 저장 (신규는 생성, 기존은 accessToken 갱신)
         AppUser user = users.findByProviderAndProviderId("kakao", kakaoId).orElse(null);
         boolean isNewUser = (user == null);
         if (isNewUser) {
@@ -51,11 +55,15 @@ public class AuthService {
                     .username(profile.getUsername())
                     .email(profile.getEmail())
                     .profileImageUrl(profile.getProfileImageUrl())
+                    .kakaoAccessToken(accessToken) // 신규 저장
                     .build());
             log.info("New Kakao user saved. id={}", user.getId());
+        } else {
+            user.setKakaoAccessToken(accessToken); // 기존 사용자 갱신
+            users.save(user);
         }
 
-        // 4) JWT 발급 & Refresh 저장 (기존 refresh 정리)
+        // 4) JWT 발급 & Refresh 저장
         String at = jwt.generateAccess(user.getId());
         String rt = jwt.generateRefresh(user.getId());
 
@@ -74,9 +82,8 @@ public class AuthService {
         );
     }
 
-    /**
-     * Refresh Token → Access Token 재발급
-     */
+    // Refresh Token → Access Token 재발급
+
     @Transactional(readOnly = true)
     public RefreshTokenResponse refresh(String refreshToken) {
         var token = refreshRepo.findByRefreshToken(refreshToken)
@@ -87,5 +94,32 @@ public class AuthService {
         }
         String newAccess = jwt.generateAccess(token.getUser().getId());
         return new RefreshTokenResponse(newAccess);
+    }
+
+    // 로그아웃
+    @Transactional
+    public void logout(Long userId) {
+        AppUser user = users.findById(userId).orElseThrow();
+
+        // 카카오 로그아웃 호출 (카카오 사용자만)
+        if ("kakao".equals(user.getProvider()) && user.getKakaoAccessToken() != null) {
+            try {
+                HttpHeaders headers = new HttpHeaders();
+                headers.add("Authorization", "Bearer " + user.getKakaoAccessToken());
+                HttpEntity<Void> request = new HttpEntity<>(headers);
+
+                restTemplate.postForObject(KAKAO_LOGOUT_URL, request, String.class);
+                log.info("Kakao logout successful for userId={}", userId);
+            } catch (Exception e) {
+                log.warn("Kakao logout failed for userId={}", userId, e);
+            }
+        }
+
+        // Refresh Token 삭제
+        refreshRepo.deleteByUser(user);
+
+        // DB에 저장된 카카오 AccessToken 무효화
+        user.setKakaoAccessToken(null);
+        users.save(user);
     }
 }

@@ -2,7 +2,6 @@ package com.example.unis_rssol.mypage.controller;
 
 import com.example.unis_rssol.mypage.dto.*;
 import com.example.unis_rssol.mypage.service.MypageService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -11,10 +10,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/mypage")
-@RequiredArgsConstructor
 public class MypageController {
 
     private final MypageService service;
+
+    // 직접 생성자 정의
+    public MypageController(MypageService service) {
+        this.service = service;
+    }
 
     // ===== 활성 매장 =====
 
