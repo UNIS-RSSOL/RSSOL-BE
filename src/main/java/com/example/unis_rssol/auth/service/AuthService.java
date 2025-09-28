@@ -74,16 +74,16 @@ public class AuthService {
                 .expiresAt(LocalDateTime.now().plusDays(14))
                 .build());
 
-        // 5) 응답
+        // 5) 응답 ( *** activeStoreId 추가 !!!! )
         return new LoginResponse(
                 at, rt, user.getId(), isNewUser,
                 user.getUsername(), user.getEmail(), user.getProfileImageUrl(),
-                user.getProvider(), user.getProviderId()
+                user.getProvider(), user.getProviderId(),
+                user.getActiveStoreId()
         );
     }
 
     // Refresh Token → Access Token 재발급
-
     @Transactional(readOnly = true)
     public RefreshTokenResponse refresh(String refreshToken) {
         var token = refreshRepo.findByRefreshToken(refreshToken)

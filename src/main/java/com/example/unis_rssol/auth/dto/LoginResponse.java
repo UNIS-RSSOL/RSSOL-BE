@@ -17,4 +17,6 @@ public class LoginResponse {
 
     private String provider;
     private String providerId;
+
+    private Long activeStoreId;
 }
