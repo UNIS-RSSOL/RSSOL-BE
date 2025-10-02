@@ -26,10 +26,6 @@ public class AppUser {
     @Column(name = "kakao_access_token", length = 500)
     private String kakaoAccessToken;
 
-    @Enumerated(EnumType.STRING)
-    private Status status = Status.ACTIVE;
-    public enum Status { ACTIVE, DORMANT, WITHDRAWN }
-
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
