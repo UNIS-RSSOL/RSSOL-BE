@@ -60,6 +60,10 @@ public class OnboardingService {
                 .employmentStatus(UserStore.EmploymentStatus.HIRED)
                 .build());
 
+       // 현재 받은 매장 아이디를 활성 가게 아이디로 넣기
+        user.setActiveStoreId(store.getId());
+        users.save(user);
+
         // 계좌 저장 (선택적)
         Bank bank = null;
         BankAccount account = null;
