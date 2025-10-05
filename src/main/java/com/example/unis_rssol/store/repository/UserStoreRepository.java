@@ -21,4 +21,9 @@ public interface UserStoreRepository extends JpaRepository<UserStore, Long> {
 
     // 최초 등록 매장(활성 매장 미설정시 기본값용)
     Optional<UserStore> findFirstByUserIdOrderByCreatedAtAsc(Long userId);
+
+    //userId → user.id, storeId → store.id 를 보고 조회하므로, user_id에 접근하려면 언더바가 필요해서 추가했음
+    Optional<UserStore> findByUser_IdAndStore_Id(Long userId, Long storeId);
+
+
 }
