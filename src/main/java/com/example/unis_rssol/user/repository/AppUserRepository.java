@@ -6,4 +6,7 @@ import java.util.Optional;
 
 public interface AppUserRepository extends JpaRepository<AppUser, Long> {
     Optional<AppUser> findByProviderAndProviderId(String provider, String providerId);
+
+    //로컬개발용
+    Optional<AppUser> findByEmail(String email);
 }
