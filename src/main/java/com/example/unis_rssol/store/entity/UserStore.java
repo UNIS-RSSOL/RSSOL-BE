@@ -3,6 +3,7 @@ package com.example.unis_rssol.store.entity;
 import com.example.unis_rssol.user.entity.AppUser;
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity @Table(name="user_store",
@@ -19,6 +20,9 @@ public class UserStore {
 
     @Enumerated(EnumType.STRING) private EmploymentStatus employmentStatus = EmploymentStatus.HIRED;
     public enum EmploymentStatus { HIRED, ON_LEAVE, RESIGNED }
+
+    @Column(name = "hire_date")
+    private LocalDate hireDate;
 
     private LocalDateTime createdAt; private LocalDateTime updatedAt;
     @PrePersist void pre(){ createdAt=LocalDateTime.now(); updatedAt=LocalDateTime.now(); }

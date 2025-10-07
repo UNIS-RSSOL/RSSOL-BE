@@ -2,6 +2,8 @@ package com.example.unis_rssol.onboarding.dto;
 
 import lombok.Getter;
 
+import java.time.LocalDate;
+
 @Getter
 public class OnboardingRequest {
     private String role;   // "OWNER" or "STAFF"
@@ -16,4 +18,7 @@ public class OnboardingRequest {
     // 은행 계좌 정보 (STAFF, OWNER 공통)
     private Integer bankId;
     private String accountNumber;
+
+    // 알바생일 경우 입사날짜 작성
+    private LocalDate hireDate;
 }
