@@ -3,6 +3,9 @@ package com.example.unis_rssol.onboarding.dto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @Getter
 @AllArgsConstructor
 public class OnboardingResponse {
@@ -19,4 +22,5 @@ public class OnboardingResponse {
     private Integer bankId;
     private String bankName;
     private String accountNumber;
+    private LocalDate hireDate;
 }

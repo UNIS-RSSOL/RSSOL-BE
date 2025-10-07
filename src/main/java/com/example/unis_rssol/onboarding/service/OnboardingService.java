@@ -47,30 +47,30 @@ public class OnboardingService {
             // 알바: 매장 코드로 참여
             store = stores.findByStoreCode(req.getStoreCode())
                     .orElseThrow(() -> new IllegalArgumentException("Invalid store code"));
-
         } else {
             throw new IllegalArgumentException("Invalid role: " + req.getRole());
         }
 
-        // 매장-사용자 관계 저장
-        UserStore link = userStores.save(UserStore.builder()
+        UserStore link = UserStore.builder()
                 .user(user)
                 .store(store)
                 .position(UserStore.Position.valueOf(req.getRole().toUpperCase()))
                 .employmentStatus(UserStore.EmploymentStatus.HIRED)
-                .build());
+                .hireDate("STAFF".equalsIgnoreCase(req.getRole()) ? req.getHireDate() : null)
+                .build();
 
-       // 현재 받은 매장 아이디를 활성 가게 아이디로 넣기
+        userStores.save(link);
+
+        // 활성 매장 설정
         user.setActiveStoreId(store.getId());
         users.save(user);
 
-        // 계좌 저장 (선택적)
+        // 계좌 저장 (선택)
         Bank bank = null;
         BankAccount account = null;
         if (req.getBankId() != null && req.getAccountNumber() != null) {
             bank = banks.findById(req.getBankId())
                     .orElseThrow(() -> new IllegalArgumentException("Invalid bank id"));
-
             account = accounts.save(BankAccount.builder()
                     .user(user)
                     .bank(bank)
@@ -86,7 +86,8 @@ public class OnboardingService {
                 store.getBusinessRegistrationNumber(),
                 bank != null ? bank.getId() : null,
                 bank != null ? bank.getBankName() : null,
-                account != null ? account.getAccountNumber() : null
+                account != null ? account.getAccountNumber() : null,
+                link.getHireDate()
         );
     }
 }
