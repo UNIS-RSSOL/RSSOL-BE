@@ -14,6 +14,11 @@ import com.example.unis_rssol.store.entity.Store;
 import com.example.unis_rssol.store.entity.UserStore;
 import com.example.unis_rssol.store.repository.StoreRepository;
 import com.example.unis_rssol.store.repository.UserStoreRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -35,6 +40,24 @@ public class ScheduleGenerationService {
     private final WorkAvailabilityRepository workAvailabilityRepository;
     private final UserStoreRepository userStoreRepository;
 
+    public void testRedis(List<CandidateSchedule> candidateSchedules) throws JsonProcessingException {
+        String key = "candidate_schedule_test";
+        ObjectMapper mapper = new ObjectMapper();
+
+        // 저장: JSON 문자열로 변환 후 저장
+        String jsonToSave = mapper.writeValueAsString(candidateSchedules);
+        redisTemplate.opsForValue().set(key, jsonToSave, Duration.ofDays(1));
+
+        // 읽기: JSON 문자열을 가져와서 객체로 변환
+        String jsonFromRedis = (String) redisTemplate.opsForValue().get(key);
+        List<CandidateSchedule> readList = mapper.readValue(
+                jsonFromRedis,
+                new TypeReference<List<CandidateSchedule>>() {}
+        );
+
+        // 이제 readList 사용 가능
+        readList.forEach(System.out::println);
+    }
     @Transactional
     public ScheduleGenerationResponseDto createSchedules(Long userId, ScheduleGenerationRequestDto request) {
         Long storeId = authService.getActiveStoreIdOrThrow(userId);
@@ -46,7 +69,7 @@ public class ScheduleGenerationService {
         }
 
         // 1. schedule setting 생성 또는 가져오기
-        ScheduleSettings scheduleSettings = getOrCreateScheduleSettingExist(store, request);
+        ScheduleSettings scheduleSettings = createOrUpdateSetting(store, request);
         // 2. 요청에서 timeSegment 가져와서 ScheduleSettingSement 생성 및 저장 (근무표 생성 뼈대 제작 완료! - 매장 근무인원 설정 등임)
         List<ScheduleSettingSegment> segments = createSegmentsFromRequest(scheduleSettings, request.getTimeSegments());
 
@@ -62,22 +85,28 @@ public class ScheduleGenerationService {
 
     }
 
+
+
 // ==========================================================================
+    @Transactional
+    protected ScheduleSettings createOrUpdateSetting(Store store, ScheduleGenerationRequestDto request) {
+        Optional<ScheduleSettings> existingOpt = scheduleSettingsRepository.findByStoreId(store.getId());
 
-    private ScheduleSettings getOrCreateScheduleSettingExist(Store store, ScheduleGenerationRequestDto request) {
-        log.info("request.getOpenTime() = " + request.getOpenTime());
-        log.info("request.getCloseTime() = " + request.getCloseTime());
-        Optional<ScheduleSettings> existing = scheduleSettingsRepository.findByStoreId(store.getId()); //못찾으면 Optional.empty를 반환하므로 안전하게 처리
-        if (existing.isPresent()) {
-            ScheduleSettings prev = existing.get();
-            if (prev.getOpenTime().equals(request.getOpenTime()) && prev.getCloseTime().equals(request.getCloseTime())) {
-                return prev; // 기존 설정 유지 → 세그먼트만 필요 시 업데이트
-            }
+        ScheduleSettings scheduleSettings;
+        if (existingOpt.isPresent()) {
+            scheduleSettings = existingOpt.get();
+            // 기존 엔티티 업데이트
+            scheduleSettings.setOpenTime(request.getOpenTime());
+            scheduleSettings.setCloseTime(request.getCloseTime());
+            scheduleSettings.getSegments().clear(); // segments 새로 설정
+        } else {
+            scheduleSettings = new ScheduleSettings(store, request.getOpenTime(), request.getCloseTime());
         }
-        return new ScheduleSettings(store, request.getOpenTime(), request.getCloseTime());                 // 최초 생성
-    }
 
-    private List<ScheduleSettingSegment> createSegmentsFromRequest(ScheduleSettings scheduleSettings, List<ScheduleSettingSegmentRequestDto> requestSegments) {
+        return scheduleSettingsRepository.save(scheduleSettings);         // 저장까지 수행
+    }
+    @Transactional
+    protected List<ScheduleSettingSegment> createSegmentsFromRequest(ScheduleSettings scheduleSettings, List<ScheduleSettingSegmentRequestDto> requestSegments) {
         List<ScheduleSettingSegment> segments = new ArrayList<>();
 
         for (ScheduleSettingSegmentRequestDto ts : requestSegments) {
@@ -89,13 +118,16 @@ public class ScheduleGenerationService {
             segments.add(segment);
         }
 
-        scheduleSettings.setSegments(segments);
-        scheduleSettingsRepository.save(scheduleSettings);
+        scheduleSettings.getSegments().addAll(segments); // 기존 segments clear 후 새로 추가
         return segments;
     }
 
 
     public List<CandidateSchedule> generateWeeklyCandidates(Long storeId,ScheduleSettings settings, int candidateCount) {
+        String redisKey = "candidate_schedule_" + storeId;
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
         // 1️.  근무 가능자 로드
         List<WorkAvailability> availabilities = workAvailabilityRepository.findByUserStore_Store_Id(storeId);
@@ -169,13 +201,40 @@ public class ScheduleGenerationService {
             }
             candidateSchedules.add(candidate);
         }
+        //
+        saveCandidateSchedulesToRedis(storeId, candidateSchedules);
 
         return candidateSchedules;
     }
 
+    // Redis에서 읽어올 때도 항상 JSON → 객체 변환
+    public List<CandidateSchedule> getCandidateSchedules(String redisKey) {
+        String jsonFromRedis = (String) redisTemplate.opsForValue().get(redisKey);
+        if (jsonFromRedis == null) throw new NotFoundException("생성된 근무표가 없습니다.");
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        try {
+            return mapper.readValue(jsonFromRedis, new TypeReference<List<CandidateSchedule>>() {});
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Redis 캐시 읽기 실패", e);
+        }
+    }
+
     private String saveCandidateSchedulesToRedis(Long storeId, List<CandidateSchedule> schedules) {
         String key = "candidate_schedule:store:" + storeId + ":week:" + getCurrentWeekString();
-        redisTemplate.opsForValue().set(key, schedules, Duration.ofDays(1));
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        try {
+            String jsonToSave = mapper.writeValueAsString(schedules);
+            redisTemplate.opsForValue().set(key, jsonToSave, Duration.ofDays(1));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Redis 캐시 변환 실패", e);
+        }
+
         return key;
     }
 
