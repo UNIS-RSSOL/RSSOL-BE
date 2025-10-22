@@ -4,10 +4,14 @@ import com.example.unis_rssol.global.AuthorizationService;
 import com.example.unis_rssol.global.exception.ForbiddenException;
 import com.example.unis_rssol.global.exception.NotFoundException;
 import com.example.unis_rssol.schedule.DayOfWeek;
+import com.example.unis_rssol.schedule.entity.Schedule;
 import com.example.unis_rssol.schedule.entity.ScheduleSettingSegment;
 import com.example.unis_rssol.schedule.entity.ScheduleSettings;
+import com.example.unis_rssol.schedule.entity.WorkShift;
 import com.example.unis_rssol.schedule.generation.dto.*;
+import com.example.unis_rssol.schedule.repository.ScheduleRepository;
 import com.example.unis_rssol.schedule.repository.ScheduleSettingsRepository;
+import com.example.unis_rssol.schedule.repository.WorkShiftRepository;
 import com.example.unis_rssol.schedule.workavailability.WorkAvailability;
 import com.example.unis_rssol.schedule.workavailability.WorkAvailabilityRepository;
 import com.example.unis_rssol.store.entity.Store;
@@ -26,6 +30,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 
@@ -39,6 +45,8 @@ public class ScheduleGenerationService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final WorkAvailabilityRepository workAvailabilityRepository;
     private final UserStoreRepository userStoreRepository;
+    private final ScheduleRepository scheduleRepository;
+    private final WorkShiftRepository workShiftRepository;
 
     public void testRedis(List<CandidateSchedule> candidateSchedules) throws JsonProcessingException {
         String key = "candidate_schedule_test";
@@ -84,10 +92,69 @@ public class ScheduleGenerationService {
 
 
     }
+    // Redis에서 읽어올 때도 항상 JSON → 객체 변환
+    public List<CandidateSchedule> getCandidateSchedules(String redisKey) {
+        String jsonFromRedis = (String) redisTemplate.opsForValue().get(redisKey);
+        if (jsonFromRedis == null) throw new NotFoundException("생성된 근무표가 없습니다.");
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        try {
+            return mapper.readValue(jsonFromRedis, new TypeReference<List<CandidateSchedule>>() {});
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Redis 캐시 읽기 실패", e);
+        }
+    }
+
+    @Transactional
+    public Schedule finalizeCandidateSchedule(Long storeId, String candidateKey,
+                                              LocalDate startDate, LocalDate endDate) {
+        // 1️⃣ Schedule 엔티티 생성
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new NotFoundException("매장을 찾을 수 없습니다."));
+        Schedule schedule = new Schedule();
+        schedule.setStore(store);
+        schedule.setStartDate(startDate);
+        schedule.setEndDate(endDate);
+        scheduleRepository.save(schedule); // 먼저 저장해서 ID 확보
+
+        // 2️⃣ Redis에서 CandidateSchedule 가져오기
+        List<CandidateSchedule> candidates = getCandidateSchedules(candidateKey);
+
+        if (candidates.isEmpty()) {
+            throw new IllegalStateException("CandidateSchedule이 없습니다.");
+        }
+
+        // 3️⃣ 여기서는 첫 번째 후보를 확정한다고 가정
+        CandidateSchedule selected = candidates.get(0);
+
+        // 4️⃣ CandidateShift → WorkShift 변환
+        for (CandidateShift shift : selected.getShifts()) {
+            if (shift.getUserStoreId() == null) continue; // UNASSIGNED
+
+            WorkShift ws = new WorkShift();
+            ws.setUserStore(userStoreRepository.findById(shift.getUserStoreId())
+                    .orElseThrow(() -> new NotFoundException("직원 정보를 찾을 수 없습니다.")));
+            ws.setSchedule(schedule);
+
+            // startDate 기준 + 요일 offset 계산
+            LocalDate shiftDate = startDate.plusDays(shift.getDay().getValue() - 1); // MON=1
+            ws.setStartDatetime(shiftDate.atTime(shift.getStartTime()));
+            ws.setEndDatetime(shiftDate.atTime(shift.getEndTime()));
+
+            workShiftRepository.save(ws);
+            schedule.getWorkShifts().add(ws);
+        }
+
+        // 5️⃣ Schedule 최종 확정
+        scheduleRepository.save(schedule);
+        return schedule;
+    }
 
 
 
-// ==========================================================================
+    // ==========================================================================
     @Transactional
     protected ScheduleSettings createOrUpdateSetting(Store store, ScheduleGenerationRequestDto request) {
         Optional<ScheduleSettings> existingOpt = scheduleSettingsRepository.findByStoreId(store.getId());
@@ -207,20 +274,7 @@ public class ScheduleGenerationService {
         return candidateSchedules;
     }
 
-    // Redis에서 읽어올 때도 항상 JSON → 객체 변환
-    public List<CandidateSchedule> getCandidateSchedules(String redisKey) {
-        String jsonFromRedis = (String) redisTemplate.opsForValue().get(redisKey);
-        if (jsonFromRedis == null) throw new NotFoundException("생성된 근무표가 없습니다.");
 
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        try {
-            return mapper.readValue(jsonFromRedis, new TypeReference<List<CandidateSchedule>>() {});
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Redis 캐시 읽기 실패", e);
-        }
-    }
 
     private String saveCandidateSchedulesToRedis(Long storeId, List<CandidateSchedule> schedules) {
         String key = "candidate_schedule:store:" + storeId + ":week:" + getCurrentWeekString();
