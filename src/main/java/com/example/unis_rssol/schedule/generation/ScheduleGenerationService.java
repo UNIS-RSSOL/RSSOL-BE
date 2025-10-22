@@ -31,7 +31,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 
@@ -60,7 +59,8 @@ public class ScheduleGenerationService {
         String jsonFromRedis = (String) redisTemplate.opsForValue().get(key);
         List<CandidateSchedule> readList = mapper.readValue(
                 jsonFromRedis,
-                new TypeReference<List<CandidateSchedule>>() {}
+                new TypeReference<>() {
+                }
         );
 
         // 이제 readList 사용 가능
@@ -101,7 +101,8 @@ public class ScheduleGenerationService {
         mapper.registerModule(new JavaTimeModule());
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         try {
-            return mapper.readValue(jsonFromRedis, new TypeReference<List<CandidateSchedule>>() {});
+            return mapper.readValue(jsonFromRedis, new TypeReference<>() {
+            });
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Redis 캐시 읽기 실패", e);
         }
@@ -191,7 +192,6 @@ public class ScheduleGenerationService {
 
 
     public List<CandidateSchedule> generateWeeklyCandidates(Long storeId,ScheduleSettings settings, int candidateCount) {
-        String redisKey = "candidate_schedule_" + storeId;
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -227,14 +227,11 @@ public class ScheduleGenerationService {
                     }
 
                     // 공정 + 경력순 정렬
-                    Collections.sort(availableStaffs, new Comparator<UserStore>() {
-                        @Override
-                        public int compare(UserStore u1, UserStore u2) {
-                            int c1 = assignmentCount.getOrDefault(u1, 0);
-                            int c2 = assignmentCount.getOrDefault(u2, 0);
-                            if (c1 != c2) return c1 - c2; // 적게 배정된 순
-                            return u1.getHireDate().compareTo(u2.getHireDate()); // 경력순
-                        }
+                    Collections.sort(availableStaffs, (u1, u2) -> {
+                        int c1 = assignmentCount.getOrDefault(u1, 0);
+                        int c2 = assignmentCount.getOrDefault(u2, 0);
+                        if (c1 != c2) return c1 - c2; // 적게 배정된 순
+                        return u1.getHireDate().compareTo(u2.getHireDate()); // 경력순
                     });
 
                     int assigned = 0;
