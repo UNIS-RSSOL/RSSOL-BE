@@ -1,6 +1,5 @@
 package com.example.unis_rssol.schedule.generation;
 
-import com.example.unis_rssol.global.exception.NotFoundException;
 import com.example.unis_rssol.schedule.entity.Schedule;
 import com.example.unis_rssol.schedule.generation.dto.CandidateSchedule;
 import com.example.unis_rssol.schedule.generation.dto.ConfirmScheduleRequestDto;
