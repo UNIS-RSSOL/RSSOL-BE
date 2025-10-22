@@ -1,14 +1,9 @@
 package com.example.unis_rssol.schedule.entity;
-//이건 구조체로사용 DB에 저장되지 않아욤 ^~!^ 그냥 Candidate로 옮김
-import com.example.unis_rssol.schedule.DayOfWeek;
-import com.example.unis_rssol.schedule.workavailability.WorkAvailability;
+
 import com.example.unis_rssol.store.entity.Store;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
