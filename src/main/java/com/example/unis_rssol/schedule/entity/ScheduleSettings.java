@@ -11,7 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "schedule_settings")
+@Table(
+        name = "schedule_settings",
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"store_id"})} // store_id 유니크
+)
 @Getter
 @Setter
 @RequiredArgsConstructor
@@ -33,7 +36,7 @@ public class ScheduleSettings {
     @Column(nullable = false)
     private Boolean isCategorized = false;
 
-    @OneToMany(mappedBy = "scheduleSettings", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "scheduleSettings", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ScheduleSettingSegment> segments = new ArrayList<>();
 
     @CreationTimestamp
