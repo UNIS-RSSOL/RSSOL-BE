@@ -4,6 +4,7 @@ import com.example.unis_rssol.global.AuthorizationService;
 import com.example.unis_rssol.global.exception.ForbiddenException;
 import com.example.unis_rssol.global.exception.InvalidTimeRangeException;
 import com.example.unis_rssol.global.exception.NotFoundException;
+import com.example.unis_rssol.schedule.DayOfWeek;
 import com.example.unis_rssol.schedule.workavailability.dto.*;
 import com.example.unis_rssol.store.entity.UserStore;
 import com.example.unis_rssol.store.repository.UserStoreRepository;
@@ -110,7 +111,7 @@ public class WorkAvailabilityService {
         UserStore userStore = authService.getUserStoreOrThrow(userId, storeId);
         List<WorkAvailability> existing = availabilityRepository.findByUserStore(userStore);
 
-        Map<WorkAvailability.DayOfWeek, WorkAvailabilityRequestDto.AvailabilityItem> requestMap =
+        Map<DayOfWeek, WorkAvailabilityRequestDto.AvailabilityItem> requestMap =
                 request.getAvailabilities().stream()
                         .collect(Collectors.toMap(
                                 WorkAvailabilityRequestDto.AvailabilityItem::getDayOfWeek,
@@ -129,7 +130,7 @@ public class WorkAvailabilityService {
     // ----------------- Private Helpers -----------------
 
     private void handleExistingAvailabilities(List<WorkAvailability> existing,
-                                              Map<WorkAvailability.DayOfWeek, WorkAvailabilityRequestDto.AvailabilityItem> requestMap,
+                                              Map<DayOfWeek, WorkAvailabilityRequestDto.AvailabilityItem> requestMap,
                                               List<WorkAvailabilityPatchResponseDto> results) {
 
         for (WorkAvailability avail : existing) {
@@ -158,7 +159,7 @@ public class WorkAvailabilityService {
 
 
     private void handleNewAvailabilities(UserStore userStore,
-                                         Map<WorkAvailability.DayOfWeek, WorkAvailabilityRequestDto.AvailabilityItem> requestMap,
+                                         Map<DayOfWeek, WorkAvailabilityRequestDto.AvailabilityItem> requestMap,
                                          List<WorkAvailabilityPatchResponseDto> results) {
 
         for (WorkAvailabilityRequestDto.AvailabilityItem item : requestMap.values()) {
@@ -173,7 +174,7 @@ public class WorkAvailabilityService {
 
 
     private WorkAvailability saveAvailability(UserStore userStore,
-                                              WorkAvailability.DayOfWeek dayOfWeek,
+                                              DayOfWeek dayOfWeek,
                                               LocalTime start,
                                               LocalTime end) {
         WorkAvailability avail = WorkAvailability.builder()
