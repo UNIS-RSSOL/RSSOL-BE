@@ -1,4 +1,5 @@
 package com.example.unis_rssol.schedule.workavailability;
+import com.example.unis_rssol.schedule.DayOfWeek;
 import com.example.unis_rssol.store.entity.UserStore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -42,7 +43,4 @@ public class WorkAvailability {
     @UpdateTimestamp
     private Timestamp updatedAt;
 
-    public enum DayOfWeek {
-        MON, TUE, WED, THU, FRI, SAT, SUN
-    }
 }
