@@ -1,5 +1,6 @@
 package com.example.unis_rssol.schedule.workavailability.dto;
 
+import com.example.unis_rssol.schedule.DayOfWeek;
 import com.example.unis_rssol.schedule.workavailability.WorkAvailability;
 import lombok.*;
 
@@ -19,7 +20,7 @@ public class WorkAvailabilityGetResponseDto {
     @AllArgsConstructor
     public static class AvailabilityItem {
         private Long id;
-        private WorkAvailability.DayOfWeek dayOfWeek;
+        private DayOfWeek dayOfWeek;
         private String startTime;
         private String endTime;
     }

@@ -1,8 +1,10 @@
 package com.example.unis_rssol.schedule.workavailability;
 
+import com.example.unis_rssol.global.AuthorizationService;
 import com.example.unis_rssol.global.exception.ForbiddenException;
 import com.example.unis_rssol.global.exception.InvalidTimeRangeException;
 import com.example.unis_rssol.global.exception.NotFoundException;
+import com.example.unis_rssol.schedule.DayOfWeek;
 import com.example.unis_rssol.schedule.workavailability.dto.*;
 import com.example.unis_rssol.store.entity.UserStore;
 import com.example.unis_rssol.store.repository.UserStoreRepository;
@@ -24,13 +26,13 @@ import java.util.stream.Collectors;
 public class WorkAvailabilityService {
 
     private final WorkAvailabilityRepository availabilityRepository;
-    private final UserStoreRepository userStoreRepository;
-    private final AppUserRepository appUserRepository;
+    private final AuthorizationService authService;
 
     @Transactional(readOnly = true)
     public WorkAvailabilityGetResponseDto getAvailability(Long userId) {
-        UserStore userStore = getUserStoreOrThrow(userId,getStoreId(userId));
-        List<WorkAvailability> availabilities = availabilityRepository.findByUserStore(userStore);
+        Long storeId = authService.getActiveStoreIdOrThrow(userId);
+        UserStore requester = authService.getUserStoreOrThrow(userId, storeId);
+        List<WorkAvailability> availabilities = availabilityRepository.findByUserStore(requester);
         List<WorkAvailabilityGetResponseDto.AvailabilityItem> items = availabilities.stream()
                 .map(a -> new WorkAvailabilityGetResponseDto.AvailabilityItem(
                         a.getId(),
@@ -42,15 +44,15 @@ public class WorkAvailabilityService {
 
         return WorkAvailabilityGetResponseDto.builder()
                 .message("근무 가능 시간 조회에 성공했습니다.")
-                .userStoreId(userStore.getId())
+                .userStoreId(requester.getId())
                 .availabilities(items)
                 .build();
     }
 
     @Transactional(readOnly = true)
     public List<WorkAvailabilityAllResponseDto> getAllAvailability(Long userId,Long storeId) {
-        UserStore requester = getUserStoreOrThrow(userId, getStoreId(userId));
-        if (requester.getPosition() != UserStore.Position.OWNER) {throw new ForbiddenException("해당 매장을 조회할 권한이 없습니다.");        }
+        UserStore requester = authService.getUserStoreOrThrow(userId, storeId);
+        if (requester.getPosition() != UserStore.Position.OWNER) {throw new ForbiddenException("해당 매장을 조회할 권한이 없습니다."); }
 
         List<WorkAvailability> allAvailabilities = availabilityRepository.findByUserStore_Store_Id(storeId);
         Map<Long, List<WorkAvailability>> groupedByUser = new HashMap<>();
@@ -74,7 +76,8 @@ public class WorkAvailabilityService {
     @Transactional //Transactional :
     public WorkAvailabilityCreateResponseDto createAvailabilities(Long userId, WorkAvailabilityRequestDto request) {
         //유저 조회및 권한 체크!
-        UserStore userStore = getUserStoreOrThrow(userId,getStoreId(userId));
+        Long storeId = authService.getActiveStoreIdOrThrow(userId);
+        UserStore requester = authService.getUserStoreOrThrow(userId, storeId);
         int insertedCount = 0;
 
         for (WorkAvailabilityRequestDto.AvailabilityItem item : request.getAvailabilities()) {
@@ -84,18 +87,18 @@ public class WorkAvailabilityService {
 
             // 2. 중복 체크
             boolean exists = availabilityRepository
-                    .findByUserStoreAndDayOfWeekAndStartTimeAndEndTime(userStore, item.getDayOfWeek(), start, end)
+                    .findByUserStoreAndDayOfWeekAndStartTimeAndEndTime(requester, item.getDayOfWeek(), start, end)
                     .isPresent();
 
             if (!exists) {
-                saveAvailability(userStore, item.getDayOfWeek(), start, end);
+                saveAvailability(requester, item.getDayOfWeek(), start, end);
                 insertedCount++;
             }
         }
         //3. Response
         return WorkAvailabilityCreateResponseDto.builder()
                 .message("근무 가능 시간이 등록되었습니다.")
-                .userStoreId(userStore.getId())
+                .userStoreId(requester.getId())
                 .inserted(insertedCount)
                 .build();
     }
@@ -104,10 +107,11 @@ public class WorkAvailabilityService {
     @Transactional
     public List<WorkAvailabilityPatchResponseDto> replaceAvailabilities(Long userId, WorkAvailabilityRequestDto request) {
         // 1. userStore 조회 -> DB에 있는 availability조회 -> 요청데이터와 비교!
-        UserStore userStore = getUserStoreOrThrow(userId, getStoreId(userId));
+        Long storeId = authService.getActiveStoreIdOrThrow(userId);
+        UserStore userStore = authService.getUserStoreOrThrow(userId, storeId);
         List<WorkAvailability> existing = availabilityRepository.findByUserStore(userStore);
 
-        Map<WorkAvailability.DayOfWeek, WorkAvailabilityRequestDto.AvailabilityItem> requestMap =
+        Map<DayOfWeek, WorkAvailabilityRequestDto.AvailabilityItem> requestMap =
                 request.getAvailabilities().stream()
                         .collect(Collectors.toMap(
                                 WorkAvailabilityRequestDto.AvailabilityItem::getDayOfWeek,
@@ -125,22 +129,8 @@ public class WorkAvailabilityService {
     }
     // ----------------- Private Helpers -----------------
 
-    private Long getStoreId(Long userId) {
-        AppUser user =  appUserRepository.findById(userId).orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
-        Long activeStoreId = user.getActiveStoreId();
-        if (activeStoreId == null) {
-            throw new ForbiddenException("현재 활성화된 매장이 없습니다.");
-        }
-        return activeStoreId;
-    }
-
-    private UserStore getUserStoreOrThrow(Long userId, Long storeId) { //권한체크 메서드
-        return userStoreRepository.findByUser_IdAndStore_Id(userId, storeId)
-                .orElseThrow(() -> new ForbiddenException("해당 매장에 근무할 권한이 없습니다."));
-    }
-
     private void handleExistingAvailabilities(List<WorkAvailability> existing,
-                                              Map<WorkAvailability.DayOfWeek, WorkAvailabilityRequestDto.AvailabilityItem> requestMap,
+                                              Map<DayOfWeek, WorkAvailabilityRequestDto.AvailabilityItem> requestMap,
                                               List<WorkAvailabilityPatchResponseDto> results) {
 
         for (WorkAvailability avail : existing) {
@@ -169,7 +159,7 @@ public class WorkAvailabilityService {
 
 
     private void handleNewAvailabilities(UserStore userStore,
-                                         Map<WorkAvailability.DayOfWeek, WorkAvailabilityRequestDto.AvailabilityItem> requestMap,
+                                         Map<DayOfWeek, WorkAvailabilityRequestDto.AvailabilityItem> requestMap,
                                          List<WorkAvailabilityPatchResponseDto> results) {
 
         for (WorkAvailabilityRequestDto.AvailabilityItem item : requestMap.values()) {
@@ -184,7 +174,7 @@ public class WorkAvailabilityService {
 
 
     private WorkAvailability saveAvailability(UserStore userStore,
-                                              WorkAvailability.DayOfWeek dayOfWeek,
+                                              DayOfWeek dayOfWeek,
                                               LocalTime start,
                                               LocalTime end) {
         WorkAvailability avail = WorkAvailability.builder()
