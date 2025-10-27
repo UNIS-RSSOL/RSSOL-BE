@@ -1,4 +1,7 @@
 package com.example.unis_rssol.shift.repository;
 
-public class ShiftSwapRequestRepository {
+import com.example.unis_rssol.shift.entity.ShiftSwapRequest;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface ShiftSwapRequestRepository extends JpaRepository<ShiftSwapRequest, Long> {
 }
