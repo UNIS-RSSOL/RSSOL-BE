@@ -28,13 +28,13 @@ public class ShiftSwapService {
     private final WorkShiftRepository workShiftRepo;
     private final UserStoreRepository userStoreRepo;
 
-    // ① 대타 요청 생성 (여러 수신자에게 생성 → 배열 응답)
+    // ① 대타 요청 생성 (후보 전원 → 배열 응답)
     @Transactional
     public List<ShiftSwapResponseDto> create(Long userId, ShiftSwapRequestCreateDto dto) {
         WorkShift shift = workShiftRepo.findById(dto.getShiftId())
                 .orElseThrow(() -> new RuntimeException("해당 근무를 찾을 수 없습니다."));
 
-        // 요청자 (해당 근무의 소유자여야 함)
+        // 요청자 검증: 본인 근무만 가능
         UserStore requester = userStoreRepo.findByUser_IdAndStore_Id(
                 userId,
                 shift.getUserStore().getStore().getId()
@@ -44,49 +44,60 @@ public class ShiftSwapService {
             throw new RuntimeException("본인 근무에 대해서만 대타 요청을 생성할 수 있습니다.");
         }
 
-        // 같은 매장 직원들(사장+알바), 자기 자신 제외
-        List<UserStore> candidates = userStoreRepo.findByStore_Id(
-                        shift.getUserStore().getStore().getId()
-                ).stream()
-                .filter(u -> !u.getId().equals(requester.getId()))
+        var storeId = shift.getUserStore().getStore().getId();
+        var start   = shift.getStartDatetime();
+        var end     = shift.getEndDatetime();
+
+        // 후보 선정
+        List<UserStore> candidates = userStoreRepo.findByStore_Id(storeId).stream()
+                .filter(u -> !u.getId().equals(requester.getId())) // 1) 본인 제외
+                // .filter(u -> u.getPosition() == UserStore.Position.STAFF) // (옵션) 사장 제외
+                // 2) '조금이라도' 겹치면 제외
+                .filter(u -> !workShiftRepo.existsByUserStore_IdAndStartDatetimeLessThanAndEndDatetimeGreaterThan(
+                        u.getId(), end, start))
                 .toList();
 
-        // 생성된 요청들을 모아서 반환(List)
-        List<ShiftSwapResponseDto> results = new ArrayList<>();
+        // (권장) 중복 방지: 같은 수신자에게 진행 중(PENDING/ACCEPTED) 요청이 있으면 스킵
+        var dupStatuses = List.of(ShiftSwapRequest.Status.PENDING, ShiftSwapRequest.Status.ACCEPTED);
 
-        candidates.forEach(receiver -> {
-            ShiftSwapRequest request = ShiftSwapRequest.builder()
+        List<ShiftSwapResponseDto> results = new ArrayList<>();
+        for (UserStore receiver : candidates) {
+
+            if (requestRepo.existsByShift_IdAndReceiver_IdAndStatusIn(
+                    shift.getId(), receiver.getId(), dupStatuses)) {
+                continue; // 이미 진행 중이면 패스
+            }
+
+            ShiftSwapRequest request = requestRepo.save(ShiftSwapRequest.builder()
                     .shift(shift)
                     .requester(requester)
                     .receiver(receiver)
                     .reason(dto.getReason())
                     .status(ShiftSwapRequest.Status.PENDING)
                     .managerApprovalStatus(ShiftSwapRequest.ManagerApproval.PENDING)
-                    .build();
-            requestRepo.save(request);
+                    .build());
 
             notificationRepo.save(Notification.builder()
                     .userId(receiver.getUser().getId())
                     .shiftSwapRequestId(request.getId())
                     .type(Notification.Type.SHIFT_SWAP_REQUEST)
                     .message(requester.getUser().getUsername() + "님이 "
-                            + shift.getStartDatetime().toLocalDate() + " "
-                            + shift.getStartDatetime().toLocalTime() + " 근무에 대해 대타 요청을 보냈습니다.")
+                            + start.toLocalDate() + " " + start.toLocalTime()
+                            + " 근무 대타를 요청했습니다.")
                     .build());
 
             results.add(ShiftSwapResponseDto.from(request));
-        });
+        }
 
         return results;
     }
 
-    // ② 수신자(알바/사장) 응답
+    // ② 수신자 응답
     @Transactional
     public ShiftSwapResponseDto respond(Long userId, Long requestId, ShiftSwapRespondDto dto) {
         ShiftSwapRequest request = requestRepo.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("대타 요청을 찾을 수 없습니다."));
 
-        // 권한: 이 요청의 수신자만 가능
         if (!request.getReceiver().getUser().getId().equals(userId)) {
             throw new RuntimeException("이 대타 요청에 응답할 권한이 없습니다.");
         }
@@ -99,7 +110,7 @@ public class ShiftSwapService {
                 notificationRepo.save(Notification.builder()
                         .userId(request.getRequester().getUser().getId())
                         .shiftSwapRequestId(request.getId())
-                        .type(Notification.Type.SHIFT_SWAP_MANAGER_REJECTED_REQUESTER) // 필요 시 의미에 맞게 타입 분리 권장
+                        .type(Notification.Type.SHIFT_SWAP_MANAGER_REJECTED_REQUESTER)
                         .message("대타 요청이 거절되었습니다.")
                         .build());
             }
@@ -150,20 +161,15 @@ public class ShiftSwapService {
             default -> throw new RuntimeException("지원하지 않는 action 입니다. (ACCEPT/REJECT)");
         }
 
-        return ShiftSwapResponseDto.builder()
-                .requestId(request.getId())
-                .status(request.getStatus())
-                .managerApprovalStatus(request.getManagerApprovalStatus())
-                .build();
+        return ShiftSwapResponseDto.from(request);
     }
 
-    // ③ 사장 최종 승인 / 거절
+    // ③ 사장 최종 승인/거절
     @Transactional
     public ShiftSwapResponseDto managerApproval(Long userId, Long requestId, ShiftSwapManagerApprovalDto dto) {
         ShiftSwapRequest request = requestRepo.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("대타 요청을 찾을 수 없습니다."));
 
-        // 권한: 매장 OWNER만
         List<UserStore> owners = userStoreRepo.findByStoreIdAndPosition(
                 request.getRequester().getStore().getId(), UserStore.Position.OWNER);
         boolean isOwner = owners.stream().anyMatch(o -> o.getUser().getId().equals(userId));
@@ -212,14 +218,10 @@ public class ShiftSwapService {
             default -> throw new RuntimeException("지원하지 않는 action 입니다. (APPROVE/REJECT)");
         }
 
-        return ShiftSwapResponseDto.builder()
-                .requestId(request.getId())
-                .status(request.getStatus())
-                .managerApprovalStatus(request.getManagerApprovalStatus())
-                .build();
+        return ShiftSwapResponseDto.from(request);
     }
 
-    // ④ 알림 조회
+    // ④ 알림 조회 (기존)
     @Transactional(readOnly = true)
     public List<Notification> getNotifications(Long userId) {
         return notificationRepo.findByUserIdOrderByCreatedAtDesc(userId);
