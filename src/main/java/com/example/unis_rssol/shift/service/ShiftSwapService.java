@@ -28,7 +28,7 @@ public class ShiftSwapService {
     private final WorkShiftRepository workShiftRepo;
     private final UserStoreRepository userStoreRepo;
 
-    // ① 대타 요청 생성 (후보 전원 → 배열 응답)
+    // 1. 대타 요청 생성 (후보 전원 -> 배열 응답)
     @Transactional
     public List<ShiftSwapResponseDto> create(Long userId, ShiftSwapRequestCreateDto dto) {
         WorkShift shift = workShiftRepo.findById(dto.getShiftId())
@@ -57,7 +57,7 @@ public class ShiftSwapService {
                         u.getId(), end, start))
                 .toList();
 
-        // (권장) 중복 방지: 같은 수신자에게 진행 중(PENDING/ACCEPTED) 요청이 있으면 스킵
+        // 중복 방지 - 같은 수신자에게 진행 중(PENDING/ACCEPTED) 요청이 있으면 스킵
         var dupStatuses = List.of(ShiftSwapRequest.Status.PENDING, ShiftSwapRequest.Status.ACCEPTED);
 
         List<ShiftSwapResponseDto> results = new ArrayList<>();
@@ -92,7 +92,7 @@ public class ShiftSwapService {
         return results;
     }
 
-    // ② 수신자 응답
+    // 2. 수신자 응답
     @Transactional
     public ShiftSwapResponseDto respond(Long userId, Long requestId, ShiftSwapRespondDto dto) {
         ShiftSwapRequest request = requestRepo.findById(requestId)
@@ -164,7 +164,7 @@ public class ShiftSwapService {
         return ShiftSwapResponseDto.from(request);
     }
 
-    // ③ 사장 최종 승인/거절
+    // 3. 사장 최종 승인/거절
     @Transactional
     public ShiftSwapResponseDto managerApproval(Long userId, Long requestId, ShiftSwapManagerApprovalDto dto) {
         ShiftSwapRequest request = requestRepo.findById(requestId)
@@ -221,7 +221,7 @@ public class ShiftSwapService {
         return ShiftSwapResponseDto.from(request);
     }
 
-    // ④ 알림 조회 (기존)
+    // 4. 알림 조회
     @Transactional(readOnly = true)
     public List<Notification> getNotifications(Long userId) {
         return notificationRepo.findByUserIdOrderByCreatedAtDesc(userId);
