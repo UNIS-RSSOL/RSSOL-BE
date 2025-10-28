@@ -36,7 +36,7 @@ public class SecurityConfig {
                             "/api/auth/kakao/**",
                             "/api/auth/register",
                             "/error",
-                            "/auth/dev-token" //로컬개발용으로추가
+                            "/api/auth/dev-token" //로컬개발용으로추가
                     ).permitAll();
 
                     // OWNER 전용 API
