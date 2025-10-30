@@ -45,27 +45,24 @@ public class ShiftSwapService {
         }
 
         var storeId = shift.getUserStore().getStore().getId();
-        var start   = shift.getStartDatetime();
-        var end     = shift.getEndDatetime();
+        var start = shift.getStartDatetime();
+        var end = shift.getEndDatetime();
 
         // 후보 선정
         List<UserStore> candidates = userStoreRepo.findByStore_Id(storeId).stream()
-                .filter(u -> !u.getId().equals(requester.getId())) // 1) 본인 제외
-                // .filter(u -> u.getPosition() == UserStore.Position.STAFF) // (옵션) 사장 제외
-                // 2) '조금이라도' 겹치면 제외
+                .filter(u -> !u.getId().equals(requester.getId())) // 본인 제외
                 .filter(u -> !workShiftRepo.existsByUserStore_IdAndStartDatetimeLessThanAndEndDatetimeGreaterThan(
-                        u.getId(), end, start))
+                        u.getId(), end, start)) // 근무시간 겹치면 제외
                 .toList();
 
-        // 중복 방지 - 같은 수신자에게 진행 중(PENDING/ACCEPTED) 요청이 있으면 스킵
+        // 중복 방지: 진행 중(PENDING/ACCEPTED)인 요청이 있으면 패스
         var dupStatuses = List.of(ShiftSwapRequest.Status.PENDING, ShiftSwapRequest.Status.ACCEPTED);
 
         List<ShiftSwapResponseDto> results = new ArrayList<>();
         for (UserStore receiver : candidates) {
-
             if (requestRepo.existsByShift_IdAndReceiver_IdAndStatusIn(
                     shift.getId(), receiver.getId(), dupStatuses)) {
-                continue; // 이미 진행 중이면 패스
+                continue;
             }
 
             ShiftSwapRequest request = requestRepo.save(ShiftSwapRequest.builder()
@@ -116,12 +113,15 @@ public class ShiftSwapService {
             }
             case "ACCEPT" -> {
                 if (request.getReceiver().getPosition() == UserStore.Position.OWNER) {
-                    // 사장 → 즉시 승인
+                    // 사장 → 즉시 최종 승인
                     request.setStatus(ShiftSwapRequest.Status.ACCEPTED);
                     request.setManagerApprovalStatus(ShiftSwapRequest.ManagerApproval.APPROVED);
 
-                    WorkShift shift = request.getShift();
+                    // 사장님 1차 수락을 하는 경우 2차 승인 안 거치고 바로 근무 주체 교체 + 상태 변경
+                    WorkShift shift = workShiftRepo.findById(request.getShift().getId())
+                            .orElseThrow(() -> new RuntimeException("근무를 찾을 수 없습니다."));
                     shift.setUserStore(request.getReceiver());
+                    shift.setShiftStatus(WorkShift.ShiftStatus.SWAPPED);
                     workShiftRepo.save(shift);
 
                     notificationRepo.saveAll(List.of(
@@ -180,8 +180,16 @@ public class ShiftSwapService {
         switch (action) {
             case "APPROVE" -> {
                 request.setManagerApprovalStatus(ShiftSwapRequest.ManagerApproval.APPROVED);
-                request.getShift().setUserStore(request.getReceiver());
-                workShiftRepo.save(request.getShift());
+                if (request.getStatus() != ShiftSwapRequest.Status.ACCEPTED) {
+                    request.setStatus(ShiftSwapRequest.Status.ACCEPTED);
+                }
+
+                // 사장님의 2차 수락을 거치는 경우 -> 근무 주체 교체 + 상태 변경
+                WorkShift shift = workShiftRepo.findById(request.getShift().getId())
+                        .orElseThrow(() -> new RuntimeException("근무를 찾을 수 없습니다."));
+                shift.setUserStore(request.getReceiver());
+                shift.setShiftStatus(WorkShift.ShiftStatus.SWAPPED);
+                workShiftRepo.save(shift);
 
                 notificationRepo.saveAll(List.of(
                         Notification.builder()
