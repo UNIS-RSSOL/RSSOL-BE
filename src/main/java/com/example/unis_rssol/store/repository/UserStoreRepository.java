@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserStoreRepository extends JpaRepository<UserStore, Long> {
+
     // 내 모든 매장 (사장/알바 공통)
     List<UserStore> findByUserId(Long userId);
 
@@ -22,8 +23,12 @@ public interface UserStoreRepository extends JpaRepository<UserStore, Long> {
     // 최초 등록 매장(활성 매장 미설정시 기본값용)
     Optional<UserStore> findFirstByUserIdOrderByCreatedAtAsc(Long userId);
 
-    //userId → user.id, storeId → store.id 를 보고 조회하므로, user_id에 접근하려면 언더바가 필요해서 추가했음
+    // user.id / store.id로 접근하는 버전 (연관관계 경유)
     Optional<UserStore> findByUser_IdAndStore_Id(Long userId, Long storeId);
 
+    // 특정 매장(storeId)에 속한 모든 UserStore (사장 + 알바)
+    List<UserStore> findByStore_Id(Long storeId);
 
+    // 특정 매장(storeId) + 포지션(OWNER/STAFF)으로 필터
+    List<UserStore> findByStoreIdAndPosition(Long storeId, Position position);
 }
