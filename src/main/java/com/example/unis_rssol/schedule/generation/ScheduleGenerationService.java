@@ -224,7 +224,7 @@ public class ScheduleGenerationService {
                     }
 
                     // 공정 + 경력순 정렬
-                    Collections.sort(availableStaffs, (u1, u2) -> {
+                    availableStaffs.sort((u1, u2) -> {
                         int c1 = assignmentCount.getOrDefault(u1, 0);
                         int c2 = assignmentCount.getOrDefault(u2, 0);
                         if (c1 != c2) return c1 - c2; // 적게 배정된 순
