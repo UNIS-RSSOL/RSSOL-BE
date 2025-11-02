@@ -43,14 +43,6 @@ public class WorkShift {
     @Enumerated(EnumType.STRING)
     private ShiftStatus shiftStatus = ShiftStatus.SCHEDULED;
 
-
-
-//    private BigDecimal minWorkHours; // 비구간 근무 시 최소 근무 시간
-//
-//    private Integer breakDurationMinutes = 0;
-//
-//    private String note;
-
     @CreationTimestamp
     private Timestamp createdAt;
 
