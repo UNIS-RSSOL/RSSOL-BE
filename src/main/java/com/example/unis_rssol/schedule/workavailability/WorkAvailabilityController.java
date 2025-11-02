@@ -53,7 +53,7 @@ public class WorkAvailabilityController {
             @AuthenticationPrincipal Long userId,
             @PathVariable Long storeId
     ){
-        List<WorkAvailabilityAllResponseDto> response = service.getAllAvailability(userId, storeId);
+        List<WorkAvailabilityAllResponseDto> response = service.getAllAvailability(storeId);
         return ResponseEntity.ok(response);
     }
 
