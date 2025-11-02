@@ -50,7 +50,6 @@ public class WorkAvailabilityController {
     @OwnerOnly
     @GetMapping("/{storeId}/availabilities")
     public ResponseEntity<List<WorkAvailabilityAllResponseDto>> getAllAvailability(
-            @AuthenticationPrincipal Long userId,
             @PathVariable Long storeId
     ){
         List<WorkAvailabilityAllResponseDto> response = service.getAllAvailability(storeId);
