@@ -1,6 +1,6 @@
 package com.example.unis_rssol.schedule.generation;
 
-import com.example.unis_rssol.global.AuthorizationService;
+import com.example.unis_rssol.global.auth.AuthorizationService;
 import com.example.unis_rssol.global.exception.ForbiddenException;
 import com.example.unis_rssol.global.exception.NotFoundException;
 import com.example.unis_rssol.schedule.DayOfWeek;
@@ -81,16 +81,12 @@ public class ScheduleGenerationService {
         // 2. 요청에서 timeSegment 가져와서 ScheduleSettingSement 생성 및 저장 (근무표 생성 뼈대 제작 완료! - 매장 근무인원 설정 등임)
         List<ScheduleSettingSegment> segments = createSegmentsFromRequest(scheduleSettings, request.getTimeSegments());
 
-
         // 3️.  후보 스케줄 생성 및 Redis 저장
         List<CandidateSchedule> candidates = generateWeeklyCandidates(storeId, scheduleSettings, request.getGenerationOptions().getCandidateCount());
         String redisKey = saveCandidateSchedulesToRedis(storeId, candidates);
 
-
-        // 6️⃣ Response 생성
+        // Response 생성
         return buildResponse(scheduleSettings, storeId, segments, redisKey, candidates.size());
-
-
     }
     // Redis에서 읽어올 때도 항상 JSON → 객체 변환
     public List<CandidateSchedule> getCandidateSchedules(String redisKey) {
@@ -137,7 +133,7 @@ public class ScheduleGenerationService {
             WorkShift ws = new WorkShift();
             ws.setUserStore(userStoreRepository.findById(shift.getUserStoreId())
                     .orElseThrow(() -> new NotFoundException("직원 정보를 찾을 수 없습니다.")));
-            ws.setSchedule(schedule);
+            ws.setStore(store);
 
             // startDate 기준 + 요일 offset 계산
             LocalDate shiftDate = startDate.plusDays(shift.getDay().getValue() - 1); // MON=1
@@ -173,6 +169,7 @@ public class ScheduleGenerationService {
 
         return scheduleSettingsRepository.save(scheduleSettings);         // 저장까지 수행
     }
+
     @Transactional
     protected List<ScheduleSettingSegment> createSegmentsFromRequest(ScheduleSettings scheduleSettings, List<ScheduleSettingSegmentRequestDto> requestSegments) {
         List<ScheduleSettingSegment> segments = new ArrayList<>();
@@ -191,7 +188,7 @@ public class ScheduleGenerationService {
     }
 
 
-    public List<CandidateSchedule> generateWeeklyCandidates(Long storeId,ScheduleSettings settings, int candidateCount) {
+    public List<CandidateSchedule> generateWeeklyCandidates(Long storeId, ScheduleSettings settings, int candidateCount) {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -270,7 +267,6 @@ public class ScheduleGenerationService {
 
         return candidateSchedules;
     }
-
 
 
     private String saveCandidateSchedulesToRedis(Long storeId, List<CandidateSchedule> schedules) {
