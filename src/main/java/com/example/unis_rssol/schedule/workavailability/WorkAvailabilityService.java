@@ -46,7 +46,6 @@ public class WorkAvailabilityService {
 
     @Transactional(readOnly = true)
     public List<WorkAvailabilityAllResponseDto> getAllAvailability(Long userId,Long storeId) {
-        UserStore requester = authService.getUserStoreOrThrow(userId, storeId);
 
         List<WorkAvailability> allAvailabilities = availabilityRepository.findByUserStore_Store_Id(storeId);
         Map<Long, List<WorkAvailability>> groupedByUser = new HashMap<>();
