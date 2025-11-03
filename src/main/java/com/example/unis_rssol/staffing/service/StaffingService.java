@@ -37,7 +37,7 @@ public class StaffingService {
 
     private static final DateTimeFormatter DT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
-    /** 인력 요청 생성 */
+    // 사장님 추가 인력 요청 (해당 시간대에 전혀 겹치지 않는 알바에게만 알림)
     @Transactional
     public StaffingRequestDetailDto create(Long ownerUserId, StaffingCreateDto dto) {
         UserStore ownerStore = userStoreRepo.findByUser_Id(ownerUserId).stream()
@@ -47,11 +47,19 @@ public class StaffingService {
         WorkShift baseShift = workShiftRepo.findById(dto.getShiftId())
                 .orElseThrow(() -> new RuntimeException("기준 근무(shiftId=" + dto.getShiftId() + ")를 찾을 수 없습니다."));
 
-        List<UserStore> candidates = userStoreRepo.findByStore_IdAndPosition(
+        // 매장 내 전체 STAFF
+        List<UserStore> allStaff = userStoreRepo.findByStore_IdAndPosition(
                 ownerStore.getStore().getId(), Position.STAFF
         );
-        List<Long> receiverUserIds = candidates.stream()
-                .map(c -> c.getUser().getId())
+
+        // 해당 시간대에 1초라도 겹치는 알바 제외
+        List<Long> receiverUserIds = allStaff.stream()
+                .filter(staff -> !workShiftRepo.existsByUserStore_IdAndStartDatetimeLessThanAndEndDatetimeGreaterThan(
+                        staff.getId(),
+                        baseShift.getEndDatetime(),
+                        baseShift.getStartDatetime()
+                ))
+                .map(s -> s.getUser().getId())
                 .collect(Collectors.toList());
 
         StaffingRequest request = StaffingRequest.builder()
@@ -69,7 +77,7 @@ public class StaffingService {
 
         requestRepo.save(request);
 
-        // 알바들에게 발송: "사장님이 ~시간에 대해 인력을 요청했습니다."
+        // 알림 전송 (필터된 대상에게만)
         String inviteMsg = buildStaffInviteMessage(request);
         for (Long receiverId : receiverUserIds) {
             notificationRepo.save(Notification.builder()
@@ -86,7 +94,7 @@ public class StaffingService {
         return toRequestDetailDto(request);
     }
 
-    /** 알바 응답 (수락/거절) */
+    // 알바생 추가 인력 요청에 대해 수락/거절 응답
     @Transactional
     public StaffingResponseDetailDto respond(Long userId, Long requestId, StaffingRespondDto dto) {
         StaffingRequest request = requestRepo.findById(requestId)
@@ -110,7 +118,6 @@ public class StaffingService {
                 .build();
         responseRepo.save(response);
 
-        // 사장에게 발송: “알바생이 ~시간에 대한 인력 요청을 수락/거절했습니다.”
         String notifyMgrMsg = buildManagerNotifyMessage(request, response);
         notificationRepo.save(Notification.builder()
                 .userId(request.getOwner().getUser().getId())
@@ -125,7 +132,7 @@ public class StaffingService {
         return StaffingResponseDetailDto.of(request, response);
     }
 
-    /** 사장 승인/거절 */
+    // 사장님 최종 승인
     @Transactional
     public StaffingManagerApprovalDetailDto managerApproval(Long ownerUserId, Long requestId, StaffingManagerApprovalDto dto) {
         StaffingRequest request = requestRepo.findById(requestId)
@@ -174,7 +181,6 @@ public class StaffingService {
             shiftAssigned = true;
         }
 
-        // 알바에게 발송: 승인/거절 결과
         String workerMsg = buildWorkerResultMessage(request, response, shiftAssigned);
         notificationRepo.save(Notification.builder()
                 .userId(response.getCandidate().getUser().getId())
@@ -227,7 +233,6 @@ public class StaffingService {
     }
 
     // ==== 알림 메시지 빌더 ====
-
     private String buildStaffInviteMessage(StaffingRequest req) {
         String when = req.getStartDatetime().format(DT) + " ~ " + req.getEndDatetime().format(DT);
         String store = req.getStore().getName();
