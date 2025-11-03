@@ -40,3 +40,4 @@ logging:
     root: INFO
     org.springframework.security: DEBUG
     com.example.unis_rssol: DEBUG
+
