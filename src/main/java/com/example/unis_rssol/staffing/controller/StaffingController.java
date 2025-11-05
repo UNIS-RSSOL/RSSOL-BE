@@ -14,7 +14,7 @@ public class StaffingController {
 
     private final StaffingService service;
 
-    // 인력 요청 생성 (POST /api/staffing/requests)
+    // 1. 사장님 추가 인력 요청 생성
     @PostMapping("/requests")
     public ResponseEntity<StaffingRequestDetailDto> create(
             @AuthenticationPrincipal Long userId,
@@ -23,9 +23,8 @@ public class StaffingController {
         return ResponseEntity.status(201).body(service.create(userId, dto));
     }
 
-    // 알바 응답 (POST/PATCH 둘 다 허용)
-    @RequestMapping(value = "/requests/{requestId}/respond",
-            method = {RequestMethod.POST, RequestMethod.PATCH})
+    // 2. 알바생 수락/거절 1차 응답
+    @PatchMapping("/requests/{requestId}/respond")
     public ResponseEntity<StaffingResponseDetailDto> respond(
             @AuthenticationPrincipal Long userId,
             @PathVariable Long requestId,
@@ -34,7 +33,7 @@ public class StaffingController {
         return ResponseEntity.ok(service.respond(userId, requestId, dto));
     }
 
-    // 사장 최종 승인/거절 (PATCH /api/staffing/requests/{requestId}/manager-approval)
+    // 3. 사장님 최종 승인/거절 응답
     @PatchMapping("/requests/{requestId}/manager-approval")
     public ResponseEntity<StaffingManagerApprovalDetailDto> managerApproval(
             @AuthenticationPrincipal Long userId,

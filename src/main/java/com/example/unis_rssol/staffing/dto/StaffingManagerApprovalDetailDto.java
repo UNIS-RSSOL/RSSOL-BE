@@ -21,12 +21,12 @@ public class StaffingManagerApprovalDetailDto {
 
     private Integer headcountRequested;
     private Integer headcountFilled;
-    private String requestStatus;       // OPEN/FILLED/...
+    private String requestStatus;
 
     private String workerAction;        // ACCEPT/REJECT/...
     private String managerApproval;     // APPROVED/REJECTED/PENDING
 
-    private boolean shiftAssigned;      // 승인 시 새 WorkShift 생성 여부
+    private boolean shiftAssigned;      // 승인 시 새 WorkShift 생성 여부 - 추가 인력에 대한 work_shift 행 추가
 
     public static StaffingManagerApprovalDetailDto of(StaffingRequest req, StaffingResponse resp, boolean shiftAssigned) {
         return StaffingManagerApprovalDetailDto.builder()

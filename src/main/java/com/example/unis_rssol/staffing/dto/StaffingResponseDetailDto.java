@@ -16,17 +16,17 @@ public class StaffingResponseDetailDto {
     private Long ownerUserId;
     private Long candidateUserId;
 
-    private String start; // ISO
-    private String end;   // ISO
+    private String start;
+    private String end;
 
     private Integer headcountRequested;
     private Integer headcountFilled;
 
-    private String requestStatus;      // StaffingRequest.Status
-    private String workerAction;       // StaffingResponse.WorkerAction
-    private String managerApproval;    // StaffingResponse.ManagerApproval
+    private String requestStatus;
+    private String workerAction;
+    private String managerApproval;
 
-    private String createdAt; // response.createdAt (ISO)
+    private String createdAt;
 
     public static StaffingResponseDetailDto of(StaffingRequest req, StaffingResponse resp) {
         return StaffingResponseDetailDto.builder()

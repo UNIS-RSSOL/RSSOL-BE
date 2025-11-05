@@ -28,6 +28,7 @@ public class ShiftSwapService {
     private final WorkShiftRepository workShiftRepo;
     private final UserStoreRepository userStoreRepo;
 
+
     // 1. 대타 요청 생성 (후보 전원 -> 배열 응답)
     @Transactional
     public List<ShiftSwapResponseDto> create(Long userId, ShiftSwapRequestCreateDto dto) {
@@ -85,11 +86,10 @@ public class ShiftSwapService {
 
             results.add(ShiftSwapResponseDto.from(request));
         }
-
         return results;
     }
 
-    // 2. 수신자 응답
+    // 2. 알바생 수락/거절 1차 응답
     @Transactional
     public ShiftSwapResponseDto respond(Long userId, Long requestId, ShiftSwapRespondDto dto) {
         ShiftSwapRequest request = requestRepo.findById(requestId)
@@ -113,11 +113,11 @@ public class ShiftSwapService {
             }
             case "ACCEPT" -> {
                 if (request.getReceiver().getPosition() == UserStore.Position.OWNER) {
-                    // 사장 → 즉시 최종 승인
+                    // 사장이 1차 수락 시 -> 즉시 최종 승인으로 상태 변경
                     request.setStatus(ShiftSwapRequest.Status.ACCEPTED);
                     request.setManagerApprovalStatus(ShiftSwapRequest.ManagerApproval.APPROVED);
 
-                    // 사장님 1차 수락을 하는 경우 2차 승인 안 거치고 바로 근무 주체 교체 + 상태 변경
+                    // 사장님 1차 수락을 하는 경우 2차 승인 안 거치고 바로 work_shift의 근무 주체 교체 + 상태 변경
                     WorkShift shift = workShiftRepo.findById(request.getShift().getId())
                             .orElseThrow(() -> new RuntimeException("근무를 찾을 수 없습니다."));
                     shift.setUserStore(request.getReceiver());
@@ -130,16 +130,10 @@ public class ShiftSwapService {
                                     .shiftSwapRequestId(request.getId())
                                     .type(Notification.Type.SHIFT_SWAP_MANAGER_APPROVED_REQUESTER)
                                     .message("사장님이 대타 요청을 최종 승인했습니다.")
-                                    .build(),
-                            Notification.builder()
-                                    .userId(request.getReceiver().getUser().getId())
-                                    .shiftSwapRequestId(request.getId())
-                                    .type(Notification.Type.SHIFT_SWAP_MANAGER_APPROVED_RECEIVER)
-                                    .message("대타 요청이 최종 승인되었습니다.")
                                     .build()
                     ));
                 } else {
-                    // 알바 → 1차 수락, 사장 승인 요청
+                    // 다른 알바생 중 1차 수락 -> 사장 최종 승인 요청
                     request.setStatus(ShiftSwapRequest.Status.ACCEPTED);
                     request.setManagerApprovalStatus(ShiftSwapRequest.ManagerApproval.PENDING);
 
@@ -184,7 +178,7 @@ public class ShiftSwapService {
                     request.setStatus(ShiftSwapRequest.Status.ACCEPTED);
                 }
 
-                // 사장님의 2차 수락을 거치는 경우 -> 근무 주체 교체 + 상태 변경
+                // 사장님의 2차 수락을 거치는 경우 -> work_shift 근무 주체 교체 + 상태 변경
                 WorkShift shift = workShiftRepo.findById(request.getShift().getId())
                         .orElseThrow(() -> new RuntimeException("근무를 찾을 수 없습니다."));
                 shift.setUserStore(request.getReceiver());
@@ -196,13 +190,13 @@ public class ShiftSwapService {
                                 .userId(request.getRequester().getUser().getId())
                                 .shiftSwapRequestId(request.getId())
                                 .type(Notification.Type.SHIFT_SWAP_MANAGER_APPROVED_REQUESTER)
-                                .message("대타 요청이 최종 승인되었습니다.")
+                                .message("대타 요청이 사장님으로부터 최종 승인되었습니다.")
                                 .build(),
                         Notification.builder()
                                 .userId(request.getReceiver().getUser().getId())
                                 .shiftSwapRequestId(request.getId())
                                 .type(Notification.Type.SHIFT_SWAP_MANAGER_APPROVED_RECEIVER)
-                                .message("당신이 수락한 대타 요청이 최종 승인되었습니다.")
+                                .message("당신이 수락한 대타 요청이 사장님으로부터 최종 승인되었습니다.")
                                 .build()
                 ));
             }
@@ -213,23 +207,22 @@ public class ShiftSwapService {
                                 .userId(request.getRequester().getUser().getId())
                                 .shiftSwapRequestId(request.getId())
                                 .type(Notification.Type.SHIFT_SWAP_MANAGER_REJECTED_REQUESTER)
-                                .message("대타 요청이 최종 거절되었습니다.")
+                                .message("대타 요청이 사장님으로부터 최종 거절되었습니다.")
                                 .build(),
                         Notification.builder()
                                 .userId(request.getReceiver().getUser().getId())
                                 .shiftSwapRequestId(request.getId())
                                 .type(Notification.Type.SHIFT_SWAP_MANAGER_REJECTED_RECEIVER)
-                                .message("당신이 수락한 대타 요청이 거절되었습니다.")
+                                .message("당신이 수락한 대타 요청이 사장님으로부터 거절되었습니다.")
                                 .build()
                 ));
             }
             default -> throw new RuntimeException("지원하지 않는 action 입니다. (APPROVE/REJECT)");
         }
-
         return ShiftSwapResponseDto.from(request);
     }
 
-    // 4. 알림 조회
+    // 4. 알림 조회하기
     @Transactional(readOnly = true)
     public List<Notification> getNotifications(Long userId) {
         return notificationRepo.findByUserIdOrderByCreatedAtDesc(userId);

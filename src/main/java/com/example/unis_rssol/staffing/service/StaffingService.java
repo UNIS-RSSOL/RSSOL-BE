@@ -37,7 +37,7 @@ public class StaffingService {
 
     private static final DateTimeFormatter DT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
-    // 사장님 추가 인력 요청 (해당 시간대에 전혀 겹치지 않는 알바에게만 알림)
+    // 1. 사장님 추가 인력 요청 (해당 시간대에 전혀 겹치지 않는 알바에게만 알림)
     @Transactional
     public StaffingRequestDetailDto create(Long ownerUserId, StaffingCreateDto dto) {
         UserStore ownerStore = userStoreRepo.findByUser_Id(ownerUserId).stream()
@@ -77,7 +77,7 @@ public class StaffingService {
 
         requestRepo.save(request);
 
-        // 알림 전송 (필터된 대상에게만)
+        // 알림 전송 (필터된 대상 - 인력 요청을 할 알바생들에게만)
         String inviteMsg = buildStaffInviteMessage(request);
         for (Long receiverId : receiverUserIds) {
             notificationRepo.save(Notification.builder()
@@ -90,11 +90,10 @@ public class StaffingService {
                     .message(inviteMsg)
                     .build());
         }
-
         return toRequestDetailDto(request);
     }
 
-    // 알바생 추가 인력 요청에 대해 수락/거절 응답
+    // 2. 알바생 - 추가 인력 요청에 대해 1차 수락/거절 응답
     @Transactional
     public StaffingResponseDetailDto respond(Long userId, Long requestId, StaffingRespondDto dto) {
         StaffingRequest request = requestRepo.findById(requestId)
@@ -132,7 +131,7 @@ public class StaffingService {
         return StaffingResponseDetailDto.of(request, response);
     }
 
-    // 사장님 최종 승인
+    // 3. 사장님 - 수락/거절 최종 승인
     @Transactional
     public StaffingManagerApprovalDetailDto managerApproval(Long ownerUserId, Long requestId, StaffingManagerApprovalDto dto) {
         StaffingRequest request = requestRepo.findById(requestId)
