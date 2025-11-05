@@ -4,5 +4,5 @@ import lombok.*;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class StaffingRespondDto {
-    private String action; // "ACCEPT" | "REJECT"
+    private String action; // accept 또는 reject
 }

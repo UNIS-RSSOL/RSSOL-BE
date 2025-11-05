@@ -25,7 +25,7 @@ public class StaffingResponse {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 어떤 요청에 대한 응답인가
+    // 어떤 요청에 대한 응답인지
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "staffing_request_id")
     private StaffingRequest staffingRequest;
