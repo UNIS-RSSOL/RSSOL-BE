@@ -36,8 +36,8 @@ jwt:
 logging:
   level:
     root: INFO
-    org.springframework.security: DEBUG
-    com.example.unis_rssol: DEBUG
+    org.springframework.security: INFO
+    com.example.unis_rssol: INFO
 
 management:
   endpoints:

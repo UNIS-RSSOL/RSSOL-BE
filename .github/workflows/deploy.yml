@@ -51,7 +51,7 @@ jobs:
             SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}
             SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
-            KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID}}
+            KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
             KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}
             KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}
             EOF
@@ -76,4 +76,5 @@ jobs:
               --network rssol-net \
               --env-file .env \
               -p 8080:8080 \
+              -e "JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true" \
               ${{ secrets.ECR_REPOSITORY }}:latest
