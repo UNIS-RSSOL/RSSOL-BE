@@ -14,8 +14,8 @@ public class UserProfileService {
     private final AppUserRepository users;
 
     // ⭐️ S3 기본 이미지 URL (UserService에서 이동)
-    private static final String STAFF_DEFAULT_URL = "https://rssol-bucket.s3.ap-northeast-2.amazonaws.com/staff.png";
-    private static final String OWNER_DEFAULT_URL = "https://rssol-bucket.s3.ap-northeast-2.amazonaws.com/owner.png";
+    private static final String STAFF_DEFAULT_URL = "https://rssol-bucket.s3.ap-northeast-2.amazonaws.com/staff.svg";
+    private static final String OWNER_DEFAULT_URL = "https://rssol-bucket.s3.ap-northeast-2.amazonaws.com/owner.svg";
     
 
     /**

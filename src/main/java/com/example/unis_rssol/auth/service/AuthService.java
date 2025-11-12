@@ -58,7 +58,7 @@ public class AuthService {
         boolean isKakaoDefault = (kakaoProfileUrl == null) || (kakaoProfileUrl.contains("default_profile.jpeg"));
 
         if (isKakaoDefault) {
-            finalProfileImageUrl = "https://rssol-bucket.s3.ap-northeast-2.amazonaws.com/staff.png";
+            finalProfileImageUrl = "https://rssol-bucket.s3.ap-northeast-2.amazonaws.com/staff.svg";
         } else {
             finalProfileImageUrl = kakaoProfileUrl;
         }
