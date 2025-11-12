@@ -48,9 +48,9 @@ jobs:
           script: |
             aws ecr get-login-password --region ap-northeast-2 | \
             docker login --username AWS --password-stdin 888042016323.dkr.ecr.ap-northeast-2.amazonaws.com
-          
-
-            docker network create rssol-net || true
+            
+            
+            docker network create --ipv6=false rssol-net || true
           
 
             docker stop redis || true && docker rm redis || true
@@ -59,7 +59,6 @@ jobs:
               --network rssol-net \
               -p 6379:6379 \
               redis:latest \
-              redis-server --bind 0.0.0.0
           
           
 
@@ -92,4 +91,4 @@ jobs:
               -e "KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}" \
               --entrypoint "/bin/sh" \
               ${{ secrets.ECR_REPOSITORY }}:latest \
-              -c "java -Djava.net.preferIPv4Stack=true -jar /app.jar --spring.data.redis.host=redis"
+              -c "java -jar /app.jar --spring.data.redis.host=redis"
