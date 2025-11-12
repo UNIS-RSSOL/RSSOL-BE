@@ -1,5 +1,6 @@
 package com.example.unis_rssol.schedule.workavailability;
 
+import com.example.unis_rssol.global.auth.annotation.OwnerOnly;
 import com.example.unis_rssol.schedule.workavailability.dto.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -46,12 +47,12 @@ public class WorkAvailabilityController {
         return ResponseEntity.ok(response);
     }
 
+    @OwnerOnly
     @GetMapping("/{storeId}/availabilities")
     public ResponseEntity<List<WorkAvailabilityAllResponseDto>> getAllAvailability(
-            @AuthenticationPrincipal Long userId,
             @PathVariable Long storeId
     ){
-        List<WorkAvailabilityAllResponseDto> response = service.getAllAvailability(userId, storeId);
+        List<WorkAvailabilityAllResponseDto> response = service.getAllAvailability(storeId);
         return ResponseEntity.ok(response);
     }
 
