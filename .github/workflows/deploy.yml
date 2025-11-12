@@ -51,6 +51,11 @@ jobs:
             SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}
             SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}
             EOF
+
+            # ECR 로그인 추가 
+            aws ecr get-login-password --region ap-northeast-2 | \
+            docker login --username AWS --password-stdin 888042016323.dkr.ecr.ap-northeast-2.amazonaws.com
+
             docker stop app || true && docker rm app || true
             docker pull ${{ secrets.ECR_REPOSITORY }}:latest
             docker run -d \
