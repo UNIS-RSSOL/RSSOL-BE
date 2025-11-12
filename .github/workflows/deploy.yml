@@ -53,6 +53,7 @@ jobs:
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID}}
             KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}
+            KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}
             EOF
 
             # ECR 로그인 추가 
