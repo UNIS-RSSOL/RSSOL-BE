@@ -23,7 +23,7 @@ spring:
     redis:
       host: redis #localhost #Redis가 Docker에서 돌아가는 경우라면 host를 redis (컨테이너 이름)으로
       port: 6379
-      password: your_password  # 없으면 생략
+      password: ${REDIS_PASSWORD}  # 없으면 생략
       timeout: 6000ms
 
 oauth:
