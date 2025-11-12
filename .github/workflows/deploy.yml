@@ -46,22 +46,13 @@ jobs:
           username: ec2-user
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cat <<EOF > .env
-            SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}
-            SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}
-            SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
-            KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}
-            KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}
-            EOF
-
-            
             aws ecr get-login-password --region ap-northeast-2 | \
             docker login --username AWS --password-stdin 888042016323.dkr.ecr.ap-northeast-2.amazonaws.com
-            
+          
+          # 3. 네트워크 생성
             docker network create rssol-net || true
-
+          
+          # 4. Redis 컨테이너 실행 (IPv4 바인드 강제)
             docker stop redis || true && docker rm redis || true
             docker run -d \
               --name redis \
@@ -69,8 +60,9 @@ jobs:
               -p 6379:6379 \
               redis:latest \
               redis-server --bind 0.0.0.0
-            
-            
+          
+          
+          # 5. Redis가 준비될 때까지 대기
             echo "Waiting for Redis to start..."
             counter=0
             while ! docker exec redis redis-cli ping 2>/dev/null | grep -q PONG; do
@@ -83,14 +75,22 @@ jobs:
               fi
             done
             echo "Redis is up and running!"
-            
+          
+          # 6. ⭐ App 컨테이너 실행 (최종 수정)
+          # --env-file을 제거하고, 모든 환경 변수를 -e 플래그로 직접 주입합니다.
             docker stop app || true && docker rm app || true
             docker pull ${{ secrets.ECR_REPOSITORY }}:latest
             docker run -d \
             --name app \
             --network rssol-net \
-            --env-file /home/ec2-user/.env \
             -p 8080:8080 \
+            -e "SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}" \
+            -e "SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}" \
+            -e "SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}" \
+            -e "JWT_SECRET=${{ secrets.JWT_SECRET }}" \
+            -e "KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}" \
+            -e "KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}" \
+            -e "KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}" \
             --entrypoint "/bin/sh" \
             ${{ secrets.ECR_REPOSITORY }}:latest \
             -c "java -Djava.net.preferIPv4Stack=true -jar /app.jar --spring.data.redis.host=redis"
