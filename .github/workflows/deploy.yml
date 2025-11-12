@@ -90,6 +90,6 @@ jobs:
               --name app \
               --network rssol-net \
               --env-file /home/ec2-user/.env \
-              -e "SPRING_REDIS_HOST=redis" \
               -p 8080:8080 \
               ${{ secrets.ECR_REPOSITORY }}:latest
+              --spring.data.redis.host=redis
