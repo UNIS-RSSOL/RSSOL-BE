@@ -54,7 +54,6 @@ jobs:
             KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
             KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}
             KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}
-            SPRING_REDIS_HOST=redis
             EOF
 
             
@@ -90,6 +89,7 @@ jobs:
             docker run -d \
               --name app \
               --network rssol-net \
-              --env-file .env \
+              --env-file /home/ec2-user/.env \
+              -e "SPRING_REDIS_HOST=redis" \
               -p 8080:8080 \
               ${{ secrets.ECR_REPOSITORY }}:latest
