@@ -91,5 +91,4 @@ jobs:
               --network rssol-net \
               --env-file .env \
               -p 8080:8080 \
-              -e "JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true" \
               ${{ secrets.ECR_REPOSITORY }}:latest
