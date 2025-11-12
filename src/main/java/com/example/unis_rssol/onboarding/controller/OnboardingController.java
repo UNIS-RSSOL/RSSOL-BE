@@ -14,10 +14,7 @@ import org.springframework.web.bind.annotation.*;
 public class OnboardingController {
 
     private final OnboardingService onboardingService;
-
-    /**
-     * 온보딩: 역할 + 매장(생성/참여) + 계좌 등록까지 한 번에
-     */
+// 온보딩 - 역할 + 매장(생성/참여) + 계좌 등록까지 한 번에
     @PostMapping
     public ResponseEntity<OnboardingResponse> onboarding(
             @AuthenticationPrincipal Long userId,
