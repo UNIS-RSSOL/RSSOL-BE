@@ -59,11 +59,21 @@ jobs:
             # ECR 로그인 추가 
             aws ecr get-login-password --region ap-northeast-2 | \
             docker login --username AWS --password-stdin 888042016323.dkr.ecr.ap-northeast-2.amazonaws.com
+            
+            docker network create rssol-net || true
+
+            docker stop redis || true && docker rm redis || true
+            docker run -d \
+              --name redis \
+              --network rssol-net \
+              -p 6379:6379 \
+              redis:latest # redis 이미지가 로컬에 없으면 Docker Hub에서 자동으로 pull함.
 
             docker stop app || true && docker rm app || true
             docker pull ${{ secrets.ECR_REPOSITORY }}:latest
             docker run -d \
               --name app \
+              --network rssol-net \
               --env-file .env \
               -p 8080:8080 \
               ${{ secrets.ECR_REPOSITORY }}:latest
