@@ -83,14 +83,14 @@ jobs:
               fi
             done
             echo "Redis is up and running!"
-
+            
             docker stop app || true && docker rm app || true
             docker pull ${{ secrets.ECR_REPOSITORY }}:latest
             docker run -d \
-              --name app \
-              --network rssol-net \
-              --env-file /home/ec2-user/.env \
-              -p 8080:8080 \
-              --entrypoint "java" \
-              ${{ secrets.ECR_REPOSITORY }}:latest \
-              -Djava.net.preferIPv4Stack=true -jar /app.jar --spring.data.redis.host=redis
+            --name app \
+            --network rssol-net \
+            --env-file /home/ec2-user/.env \
+            -p 8080:8080 \
+            --entrypoint "java" \
+            ${{ secrets.ECR_REPOSITORY }}:latest \
+            -Djava.net.preferIPv4Stack=true -jar /app.jar --spring.data.redis.host=redis
