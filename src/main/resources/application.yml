@@ -41,3 +41,12 @@ logging:
     org.springframework.security: DEBUG
     com.example.unis_rssol: DEBUG
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info  # 허용할 엔드포인트
+  endpoint:
+    health:
+      show-details: always  # 상세 정보 표시, 필요에 따라 'never' 또는 'when-authorized'
+
