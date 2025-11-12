@@ -43,6 +43,7 @@ public class SecurityConfig {
 
                     // 로그인, 콜백, 회원가입만 허용
                     auth.requestMatchers(
+                            "/actuator/health",
                             "/api/auth/login",
                             "/api/auth/kakao/**",
                             "/api/auth/register",
