@@ -29,7 +29,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        log.info("[SecurityConfig] SecurityFilte\nrChain 초기화");
+        log.info("[SecurityConfig] SecurityFilterChain 초기화");
 
         return http
                 .csrf(csrf -> csrf.disable())
@@ -51,7 +51,7 @@ public class SecurityConfig {
                             "/swagger-ui/**",
                             "/v3/api-docs/**",
                             "/swagger-resources/**",
-                            "/webjars/**"
+                            "/webjars/**",
                             "/api/auth/dev-token" //로컬개발용으로추가
                     ).permitAll();
 
