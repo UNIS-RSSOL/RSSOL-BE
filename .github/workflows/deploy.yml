@@ -81,16 +81,16 @@ jobs:
             docker stop app || true && docker rm app || true
             docker pull ${{ secrets.ECR_REPOSITORY }}:latest
             docker run -d \
-            --name app \
-            --network rssol-net \
-            -p 8080:8080 \
-            -e "SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}" \
-            -e "SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}" \
-            -e "SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}" \
-            -e "JWT_SECRET=${{ secrets.JWT_SECRET }}" \
-            -e "KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}" \
-            -e "KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}" \
-            -e "KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}" \
-            --entrypoint "/bin/sh" \
-            ${{ secrets.ECR_REPOSITORY }}:latest \
-            -c "java -Djava.net.preferIPv4Stack=true -jar /app.jar --spring.data.redis.host=redis"
+              --name app \
+              --network rssol-net \
+              -p 8080:8080 \
+              -e "SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}" \
+              -e "SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}" \
+              -e "SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}" \
+              -e "JWT_SECRET=${{ secrets.JWT_SECRET }}" \
+              -e "KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}" \
+              -e "KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}" \
+              -e "KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}" \
+              --entrypoint "/bin/sh" \
+              ${{ secrets.ECR_REPOSITORY }}:latest \
+              -c "java -Djava.net.preferIPv4Stack=true -jar /app.jar --spring.data.redis.host=redis"
