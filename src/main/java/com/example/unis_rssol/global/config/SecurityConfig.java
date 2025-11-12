@@ -39,7 +39,7 @@ public class SecurityConfig {
                             "/api/auth/dev-token", //로컬개발용으로추가
                             // Swagger 관련 경로 모두 허용
                             "/swagger-ui/**",
-                            "/v3/api-docs/**",
+                            "/v3/   api-docs/**",
                             "/swagger-resources/**",
                             "/webjars/**"
                     ).permitAll();
