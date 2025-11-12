@@ -93,4 +93,4 @@ jobs:
               -p 8080:8080 \
               --entrypoint "java" \
               ${{ secrets.ECR_REPOSITORY }}:latest \
-              -jar /app.jar --spring.data.redis.host=redis
+              -Djava.net.preferIPv4Stack=true -jar /app.jar --spring.data.redis.host=redis
