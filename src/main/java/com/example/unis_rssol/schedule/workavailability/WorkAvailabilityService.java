@@ -1,15 +1,10 @@
 package com.example.unis_rssol.schedule.workavailability;
 
-import com.example.unis_rssol.global.AuthorizationService;
-import com.example.unis_rssol.global.exception.ForbiddenException;
+import com.example.unis_rssol.global.auth.AuthorizationService;
 import com.example.unis_rssol.global.exception.InvalidTimeRangeException;
-import com.example.unis_rssol.global.exception.NotFoundException;
 import com.example.unis_rssol.schedule.DayOfWeek;
 import com.example.unis_rssol.schedule.workavailability.dto.*;
 import com.example.unis_rssol.store.entity.UserStore;
-import com.example.unis_rssol.store.repository.UserStoreRepository;
-import com.example.unis_rssol.user.entity.AppUser;
-import com.example.unis_rssol.user.repository.AppUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,9 +45,7 @@ public class WorkAvailabilityService {
     }
 
     @Transactional(readOnly = true)
-    public List<WorkAvailabilityAllResponseDto> getAllAvailability(Long userId,Long storeId) {
-        UserStore requester = authService.getUserStoreOrThrow(userId, storeId);
-        if (requester.getPosition() != UserStore.Position.OWNER) {throw new ForbiddenException("해당 매장을 조회할 권한이 없습니다."); }
+    public List<WorkAvailabilityAllResponseDto> getAllAvailability(Long storeId) {
 
         List<WorkAvailability> allAvailabilities = availabilityRepository.findByUserStore_Store_Id(storeId);
         Map<Long, List<WorkAvailability>> groupedByUser = new HashMap<>();

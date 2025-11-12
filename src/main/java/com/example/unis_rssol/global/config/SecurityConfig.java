@@ -29,7 +29,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        log.info("[SecurityConfig] SecurityFilterChain 초기화");
+        log.info("[SecurityConfig] SecurityFilte\nrChain 초기화");
 
         return http
                 .csrf(csrf -> csrf.disable())
@@ -47,6 +47,11 @@ public class SecurityConfig {
                             "/api/auth/kakao/**",
                             "/api/auth/register",
                             "/error",
+                            // Swagger 관련 경로 모두 허용
+                            "/swagger-ui/**",
+                            "/v3/api-docs/**",
+                            "/swagger-resources/**",
+                            "/webjars/**"
                             "/api/auth/dev-token" //로컬개발용으로추가
                     ).permitAll();
 
