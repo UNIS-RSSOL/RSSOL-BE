@@ -13,6 +13,7 @@ import com.example.unis_rssol.store.repository.UserStoreRepository;
 import com.example.unis_rssol.user.entity.AppUser;
 import com.example.unis_rssol.user.repository.AppUserRepository;
 import com.example.unis_rssol.global.util.StoreCodeGenerator;
+import com.example.unis_rssol.user.service.UserProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ public class OnboardingService {
     private final UserStoreRepository userStores;
     private final BankRepository banks;
     private final BankAccountRepository accounts;
+    private final UserProfileService userProfileService;
 
     @Transactional
     public OnboardingResponse onboard(Long userId, OnboardingRequest req) {
@@ -63,7 +65,7 @@ public class OnboardingService {
 
         // 활성 매장 설정
         user.setActiveStoreId(store.getId());
-        users.save(user);
+//        users.save(user);
 
         // 계좌 저장 (선택)
         Bank bank = null;
@@ -77,6 +79,7 @@ public class OnboardingService {
                     .accountNumber(req.getAccountNumber())
                     .build());
         }
+        userProfileService.updateDefaultImageForRole(user, req.getRole().toUpperCase());
 
         return new OnboardingResponse(
                 user.getId(), link.getId(), store.getId(),

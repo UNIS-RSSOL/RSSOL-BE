@@ -17,6 +17,8 @@ public class UserService {
 
     private final AppUserRepository users;
     private final UserStoreRepository userStores;
+    private final UserProfileService userProfileService;
+
 
     @Transactional
     public SelectRoleResponse setRole(Long userId, SelectRoleRequest req) {
@@ -36,6 +38,8 @@ public class UserService {
                 .build();
 
         userStores.save(userStore);
+
+        userProfileService.updateDefaultImageForRole(u, req.getRole().toUpperCase());
 
         return new SelectRoleResponse(u.getId(), req.getRole(), true);
     }
