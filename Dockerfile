@@ -1,7 +1,6 @@
-# 1. Java 21이 설치된 공식 OpenJDK 이미지를 베이스로 사용
+# 1. Java 17이 설치된 공식 OpenJDK 이미지를 베이스로 사용
 # -> 컨테이너에서 Java 애플리케이션을 실행할 수 있도록 해줌
-FROM openjdk:21
-FROM openjdk:17
+FROM eclipse-temurin:17
 
 # 2. build/libs 폴더 아래 있는 .jar 파일을 JAR_FILE이라는 변수로 정의
 # -> Gradle 빌드 시 JAR이 이 경로에 생성됨
