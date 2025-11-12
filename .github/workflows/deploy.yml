@@ -54,7 +54,7 @@ jobs:
             KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID}}
             KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}
             KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}
-            REDIS_PASSWORD=${{REDIS_PASSWORD}} 
+            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} 
             EOF
 
             # ECR 로그인 추가 
