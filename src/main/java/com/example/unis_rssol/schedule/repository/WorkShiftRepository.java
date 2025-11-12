@@ -8,9 +8,18 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public interface WorkShiftRepository  extends JpaRepository<WorkShift, Long> {//eneity, PK 형식
-    List<WorkShift> findByStore_Id(Long storeId);
+import java.time.LocalDateTime;
 
+public interface WorkShiftRepository extends JpaRepository<WorkShift, Long> {
+
+    // 겹침 조건: existing.start < newEnd && existing.end > newStart (1초라도 겹치면 true)
+    boolean existsByUserStore_IdAndStartDatetimeLessThanAndEndDatetimeGreaterThan(
+            Long userStoreId,
+            LocalDateTime newEnd,
+            LocalDateTime newStart
+    );
+  
+    List<WorkShift> findByStore_Id(Long storeId);
 
     @Query("SELECT w FROM WorkShift w " +
             "WHERE w.store.id = :storeId " +
