@@ -91,6 +91,6 @@ jobs:
             --network rssol-net \
             --env-file /home/ec2-user/.env \
             -p 8080:8080 \
-            --entrypoint "java" \
+            --entrypoint "/bin/sh" \
             ${{ secrets.ECR_REPOSITORY }}:latest \
-            -Djava.net.preferIPv4Stack=true -jar /app.jar --spring.data.redis.host=redis
+            -c "java -Djava.net.preferIPv4Stack=true -jar /app.jar --spring.data.redis.host=redis"
