@@ -90,8 +90,7 @@ jobs:
               --name app \
               --network rssol-net \
               --env-file /home/ec2-user/.env \
-              -e "SPRING_DATA_REDIS_HOST=redis" \
-              -e "JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true" \
               -p 8080:8080 \
+              --entrypoint "java" \
               ${{ secrets.ECR_REPOSITORY }}:latest \
               -jar /app.jar --spring.data.redis.host=redis
