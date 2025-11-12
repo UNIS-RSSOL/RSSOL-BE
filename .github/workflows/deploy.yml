@@ -67,7 +67,8 @@ jobs:
               --name redis \
               --network rssol-net \
               -p 6379:6379 \
-              redis:latest
+              redis:latest \
+              redis-server --bind 0.0.0.0
             
             
             echo "Waiting for Redis to start..."
