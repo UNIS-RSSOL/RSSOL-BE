@@ -7,6 +7,7 @@ import com.example.unis_rssol.auth.repository.UserRefreshTokenRepository;
 import com.example.unis_rssol.auth.service.provider.KakaoProvider;
 import com.example.unis_rssol.auth.service.provider.SocialProfile;
 import com.example.unis_rssol.global.config.JwtTokenProvider;
+import com.example.unis_rssol.global.exception.UnauthorizedException;
 import com.example.unis_rssol.user.entity.AppUser;
 import com.example.unis_rssol.user.repository.AppUserRepository;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,30 @@ public class AuthService {
         String kakaoId = profile.getProviderId();
         log.info("Kakao profile fetched: id={}, email={}", kakaoId, profile.getEmail());
 
+        //  프로필 조회 실패 또는 ID가 없는 경우 예외처리
+        if (profile == null || profile.getProviderId() == null) {
+            log.error("Failed to fetch Kakao profile or ID is null. accessToken: {}", accessToken);
+            throw new UnauthorizedException("카카오 프로필 정보를 가져오는데 실패했습니다.");
+        }
+
+        String kakaoProfileUrl = profile.getProfileImageUrl();
+        String finalProfileImageUrl;
+
+        boolean isKakaoDefault = (kakaoProfileUrl == null) || (kakaoProfileUrl.contains("default_profile.jpeg"));
+
+        if (isKakaoDefault) {
+            finalProfileImageUrl = "https://rssol-bucket.s3.ap-northeast-2.amazonaws.com/staff.png";
+        } else {
+            finalProfileImageUrl = kakaoProfileUrl;
+        }
+
+        // 닉네임이 null일 경우 (미동의 등) 기본값 설정
+        String finalUsername = profile.getUsername();
+        if (finalUsername == null) {
+            finalUsername = "사용자"; // 또는 서비스 기본 닉네임
+            log.info("Kakao username is null. Setting to default '사용자'.");
+        }
+
         // 3) DB 저장 (신규는 생성, 기존은 accessToken 갱신)
         AppUser user = users.findByProviderAndProviderId("kakao", kakaoId).orElse(null);
         boolean isNewUser = (user == null);
@@ -52,15 +77,20 @@ public class AuthService {
             user = users.save(AppUser.builder()
                     .provider("kakao")
                     .providerId(kakaoId)
-                    .username(profile.getUsername())
+                    .username(finalUsername)
                     .email(profile.getEmail())
-                    .profileImageUrl(profile.getProfileImageUrl())
+                    .profileImageUrl(finalProfileImageUrl) // null 또는 실제 URL
                     .kakaoAccessToken(accessToken) // 신규 저장
                     .build());
             log.info("New Kakao user saved. id={}", user.getId());
         } else {
-            user.setKakaoAccessToken(accessToken); // 기존 사용자 갱신
+            user.setKakaoAccessToken(accessToken);
+            user.setUsername(finalUsername);
+            user.setEmail(profile.getEmail());
+            user.setProfileImageUrl(finalProfileImageUrl);
+
             users.save(user);
+            log.info("Existing Kakao user updated. id={}", user.getId());
         }
 
         // 4) JWT 발급 & Refresh 저장

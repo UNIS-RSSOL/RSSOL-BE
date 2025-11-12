@@ -15,4 +15,6 @@ public class SocialProfile {
     private String username;        // 닉네임
     private String email;           // 이메일 (동의/검증된 경우)
     private String profileImageUrl; // 프로필 이미지
+
+    private boolean isDefaultImage;
 }
