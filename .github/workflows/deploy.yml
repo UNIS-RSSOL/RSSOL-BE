@@ -92,4 +92,4 @@ jobs:
               --env-file /home/ec2-user/.env \
               -p 8080:8080 \
               ${{ secrets.ECR_REPOSITORY }}:latest \
-              --spring.data.redis.host=redis
+              -jar /app.jar --spring.data.redis.host=redis
