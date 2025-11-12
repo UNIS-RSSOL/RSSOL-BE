@@ -167,15 +167,9 @@ public class StaffingService {
             WorkShift newShift = new WorkShift();
             newShift.setUserStore(response.getCandidate());
             newShift.setSchedule(schedule);
-            newShift.setScheduleSettings(baseShift.getScheduleSettings());
-            newShift.setSegment(baseShift.getSegment());
             newShift.setStartDatetime(request.getStartDatetime());
             newShift.setEndDatetime(request.getEndDatetime());
-            newShift.setMinWorkHours(baseShift.getMinWorkHours());
-            newShift.setBreakDurationMinutes(baseShift.getBreakDurationMinutes());
             newShift.setShiftStatus(WorkShift.ShiftStatus.SCHEDULED);
-            newShift.setNote("인력 요청 승인으로 자동 배정됨");
-
             workShiftRepo.save(newShift);
             shiftAssigned = true;
         }
