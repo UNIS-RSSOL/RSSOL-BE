@@ -1,4 +1,4 @@
-package com.example.unis_rssol.global;
+package com.example.unis_rssol.global.auth;
 
 import com.example.unis_rssol.global.exception.ForbiddenException;
 import com.example.unis_rssol.global.exception.NotFoundException;
