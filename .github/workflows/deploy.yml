@@ -91,4 +91,4 @@ jobs:
               -e "KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}" \
               --entrypoint "/bin/sh" \
               ${{ secrets.ECR_REPOSITORY }}:latest \
-              -c "java -jar /app.jar --spring.data.redis.host=redis"
+              -c "java -jar /app.jar --spring.data.redis.host=172.19.0.2"
