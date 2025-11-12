@@ -49,10 +49,10 @@ jobs:
             aws ecr get-login-password --region ap-northeast-2 | \
             docker login --username AWS --password-stdin 888042016323.dkr.ecr.ap-northeast-2.amazonaws.com
           
-          # 3. 네트워크 생성
+
             docker network create rssol-net || true
           
-          # 4. Redis 컨테이너 실행 (IPv4 바인드 강제)
+
             docker stop redis || true && docker rm redis || true
             docker run -d \
               --name redis \
@@ -62,7 +62,7 @@ jobs:
               redis-server --bind 0.0.0.0
           
           
-          # 5. Redis가 준비될 때까지 대기
+
             echo "Waiting for Redis to start..."
             counter=0
             while ! docker exec redis redis-cli ping 2>/dev/null | grep -q PONG; do
@@ -76,8 +76,7 @@ jobs:
             done
             echo "Redis is up and running!"
           
-          # 6. ⭐ App 컨테이너 실행 (최종 수정)
-          # --env-file을 제거하고, 모든 환경 변수를 -e 플래그로 직접 주입합니다.
+
             docker stop app || true && docker rm app || true
             docker pull ${{ secrets.ECR_REPOSITORY }}:latest
             docker run -d \
