@@ -56,7 +56,7 @@ jobs:
             KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}
             EOF
 
-            # ECR 로그인 추가 
+            
             aws ecr get-login-password --region ap-northeast-2 | \
             docker login --username AWS --password-stdin 888042016323.dkr.ecr.ap-northeast-2.amazonaws.com
             
@@ -67,7 +67,21 @@ jobs:
               --name redis \
               --network rssol-net \
               -p 6379:6379 \
-              redis:latest # redis 이미지가 로컬에 없으면 Docker Hub에서 자동으로 pull함.
+              redis:latest
+            
+            
+            echo "Waiting for Redis to start..."
+            counter=0
+            while ! docker exec redis redis-cli ping 2>/dev/null | grep -q PONG; do
+              sleep 1
+              counter=$((counter+1))
+              if [ $counter -ge 20 ]; then
+                echo "Redis failed to start after 20 seconds. Aborting."
+                docker logs redis
+                exit 1
+              fi
+            done
+            echo "Redis is up and running!"
 
             docker stop app || true && docker rm app || true
             docker pull ${{ secrets.ECR_REPOSITORY }}:latest
