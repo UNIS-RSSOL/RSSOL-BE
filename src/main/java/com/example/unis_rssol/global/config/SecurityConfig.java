@@ -79,7 +79,11 @@ public class SecurityConfig {
         CorsConfiguration cfg = new CorsConfiguration();
 
         // 허용할 프론트 개발 도메인
-        cfg.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
+        cfg.setAllowedOrigins(List.of(
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "https://rssol-fe.vercel.app"
+        ));
 
         // 허용 메서드
         cfg.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
