@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 public class WorkShiftDto {
     private Long id;
     private Long userStoreId;    // userStore 객체 대신 ID만 담음
+    private Long userId;
+    private String userName;
     private LocalDateTime startDatetime;
     private LocalDateTime endDatetime;
     private String shiftStatus;
@@ -20,5 +22,9 @@ public class WorkShiftDto {
         this.endDatetime = ws.getEndDatetime();
         this.shiftStatus = ws.getShiftStatus().name();
         this.userStoreId = ws.getUserStore() != null ? ws.getUserStore().getId() : null;
+        if (ws.getUserStore().getUser() != null) {
+            this.userId = ws.getUserStore().getUser().getId();
+            this.userName = ws.getUserStore().getUser().getUsername();
+        }
     }
 }
