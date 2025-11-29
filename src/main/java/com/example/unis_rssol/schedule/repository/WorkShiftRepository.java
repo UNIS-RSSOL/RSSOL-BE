@@ -31,4 +31,13 @@ public interface WorkShiftRepository extends JpaRepository<WorkShift, Long> {
             @Param("end") LocalDateTime end
     );
 
+    @Query("SELECT w FROM WorkShift w " +
+            "WHERE w.userStore.user.id = :userId " +
+            "AND w.startDatetime BETWEEN :start AND :end " +
+            "ORDER BY w.startDatetime ASC")
+    List<WorkShift> findMyShifts(
+            @Param("userId") Long userId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
 }

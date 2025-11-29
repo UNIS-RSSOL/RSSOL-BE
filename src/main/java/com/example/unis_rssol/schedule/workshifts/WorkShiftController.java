@@ -38,14 +38,26 @@ public class WorkShiftController {
         return ResponseEntity.ok(response);
     }
 
-
-    @GetMapping("/week")
-    public ResponseEntity<List<WorkShiftDto>> getWorkShiftsByWeek(
+    /** 조회 **/
+    @GetMapping("/store/week")
+    public ResponseEntity<List<WorkShiftDto>> getStoreWorkShiftsByWeek(
             @AuthenticationPrincipal Long userId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end
     ) {
         List<WorkShift> workShifts = service.getWorkShiftsByPeriod(userId, start, end);
+        List<WorkShiftDto> dtos = workShifts.stream().map(WorkShiftDto::new).toList();
+        return ResponseEntity.ok(dtos);
+    }
+
+    /** 조회 **/
+    @GetMapping("/me/week")
+    public ResponseEntity<List<WorkShiftDto>> getMyWorkShiftsByWeek(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end
+    ) {
+        List<WorkShift> workShifts = service.getMyWorkShiftsByPeriod(userId, start, end);
         List<WorkShiftDto> dtos = workShifts.stream().map(WorkShiftDto::new).toList();
         return ResponseEntity.ok(dtos);
     }

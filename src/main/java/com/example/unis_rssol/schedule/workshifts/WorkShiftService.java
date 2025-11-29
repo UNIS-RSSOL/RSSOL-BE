@@ -52,7 +52,7 @@ public class WorkShiftService {
 
         LocalDateTime start = startDate.atStartOfDay();
         LocalDateTime end = endDate.atTime(23, 59, 59);
-        System.out.println("조회 범위: " + start + " ~ " + end);
+
         return workShiftRepository.findByStoreIdAndDateRange(storeId, start, end);
     }
 
@@ -107,5 +107,12 @@ public class WorkShiftService {
         }
 
         workShiftRepository.delete(workShift);
+    }
+    /** 내가 근무하는 모든 매장의 내스케줄 조회 **/
+    public List<WorkShift> getMyWorkShiftsByPeriod(Long userId, LocalDate startDate, LocalDate endDate) {
+        LocalDateTime start1 = startDate.atStartOfDay();
+        LocalDateTime end1 = endDate.atTime(23, 59, 59);
+
+        return workShiftRepository.findMyShifts(userId,start1,end1);
     }
 }
