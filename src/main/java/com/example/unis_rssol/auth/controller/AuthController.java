@@ -23,7 +23,8 @@ public class AuthController {
     // 프론트에서 토큰을 받을 페이지 (원하는 경로로 바꿔도 됨)
     // 예: https://rssol-fe.vercel.app/login/kakao-result
     private static final String KAKAO_FRONTEND_REDIRECT =
-            "https://rssol-fe.vercel.app/login/kakao-result";
+            "http://localhost:5173/login/kakao-result";
+
 
     /**
      * 카카오 OAuth2 Redirect 콜백 (카카오 → 백엔드)
