@@ -3,6 +3,7 @@ package com.example.unis_rssol.schedule.workshifts;
 import com.example.unis_rssol.global.auth.annotation.OwnerOnly;
 import com.example.unis_rssol.schedule.entity.WorkShift;
 import com.example.unis_rssol.schedule.repository.WorkShiftRepository;
+import com.example.unis_rssol.schedule.workshifts.dto.MyWorkShiftDto;
 import com.example.unis_rssol.schedule.workshifts.dto.WorkShiftCreateDto;
 import com.example.unis_rssol.schedule.workshifts.dto.WorkShiftDto;
 import com.example.unis_rssol.schedule.workshifts.dto.WorkShiftUpdateDto;
@@ -50,15 +51,15 @@ public class WorkShiftController {
         return ResponseEntity.ok(dtos);
     }
 
-    /** 조회 **/
+    /** 내 스케쥴 조회 **/
     @GetMapping("/me/week")
-    public ResponseEntity<List<WorkShiftDto>> getMyWorkShiftsByWeek(
+    public ResponseEntity<List<MyWorkShiftDto>> getMyWorkShiftsByWeek(
             @AuthenticationPrincipal Long userId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end
     ) {
         List<WorkShift> workShifts = service.getMyWorkShiftsByPeriod(userId, start, end);
-        List<WorkShiftDto> dtos = workShifts.stream().map(WorkShiftDto::new).toList();
+        List<MyWorkShiftDto> dtos = workShifts.stream().map(MyWorkShiftDto::new).toList();
         return ResponseEntity.ok(dtos);
     }
 
