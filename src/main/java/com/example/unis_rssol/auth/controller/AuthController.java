@@ -19,17 +19,20 @@ public class AuthController {
     private final AuthService authService;
 
     // 카카오 OAuth2 Redirect 콜백 - 프론트에서 받은 code를 백엔드가 처리
-
     @GetMapping("/kakao/callback")
     public void kakaoCallback(
             @RequestParam("code") String code,
-            @RequestParam("redirect_uri") String redirectUri, // 프론트에서 전달
+            @RequestParam(value = "redirect_uri", required = false) String redirectUri,
             HttpServletResponse response
     ) throws IOException {
 
         LoginResponse loginResponse = authService.handleKakaoCallback(code);
 
-        // JWT를 쿼리 파라미터로 붙여서 프론트로 리다이렉트
+        // 프론트 리다이렉트 URL 없으면 기본 Vercel 배포 주소 사용
+        if (redirectUri == null || redirectUri.isBlank()) {
+            redirectUri = "https://rssol-fe.vercel.app/auth/kakao/callback";
+        }
+
         String targetUrl = redirectUri
                 + "?accessToken=" + loginResponse.getAccessToken()
                 + "&refreshToken=" + loginResponse.getRefreshToken()
@@ -37,6 +40,7 @@ public class AuthController {
 
         response.sendRedirect(targetUrl);
     }
+
 
     // Refresh Token으로 Access Token 재발급
     @PostMapping("/refresh-token")
