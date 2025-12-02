@@ -1,6 +1,6 @@
 package com.example.unis_rssol.schedule.entity;
 
-import com.example.unis_rssol.store.entity.Store;
+import com.example.unis_rssol.domain.store.entity.Store;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

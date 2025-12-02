@@ -2,7 +2,7 @@ package com.example.unis_rssol.global.auth.aspect;
 
 import com.example.unis_rssol.global.auth.AuthorizationService;
 import com.example.unis_rssol.global.exception.ForbiddenException;
-import com.example.unis_rssol.store.entity.UserStore;
+import com.example.unis_rssol.domain.store.entity.UserStore;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;

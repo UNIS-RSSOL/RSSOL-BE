@@ -38,6 +38,8 @@ logging:
     root: INFO
     org.springframework.security: INFO
     com.example.unis_rssol: INFO
+    org.hibernate.SQL: DEBUG                # SQL 쿼리만 출력
+    org.hibernate.type.descriptor.sql.BasicBinder: OFF   # 변수 바인딩 로그 끄기
 
 management:
   endpoints:

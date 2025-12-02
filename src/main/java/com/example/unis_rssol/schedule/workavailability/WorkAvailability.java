@@ -1,6 +1,6 @@
 package com.example.unis_rssol.schedule.workavailability;
 import com.example.unis_rssol.schedule.DayOfWeek;
-import com.example.unis_rssol.store.entity.UserStore;
+import com.example.unis_rssol.domain.store.entity.UserStore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

@@ -1,6 +1,6 @@
 package com.example.unis_rssol.global.config;
 
-import com.example.unis_rssol.store.repository.UserStoreRepository;
+import com.example.unis_rssol.domain.store.repository.UserStoreRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;

@@ -1,6 +1,6 @@
 package com.example.unis_rssol.global.exception;
 
-import com.example.unis_rssol.global.response.ApiResponse;
+import com.example.unis_rssol.global.auth.dto.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 

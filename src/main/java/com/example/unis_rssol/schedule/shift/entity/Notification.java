@@ -1,0 +1,82 @@
+package com.example.unis_rssol.schedule.shift.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Getter @Setter @Builder
+@NoArgsConstructor @AllArgsConstructor
+@Table(
+        name = "notifications",
+        indexes = {
+                @Index(name="idx_notifications_user_created", columnList = "user_id, created_at"),
+                @Index(name="idx_notifications_target", columnList = "target_type, target_id")
+        }
+)
+public class Notification {
+
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
+    // 공통 타겟 (딥링크/라우팅용)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "target_type", length = 32)
+    private TargetType targetType; // SHIFT_SWAP_REQUEST | STAFFING_REQUEST | STAFFING_RESPONSE
+
+    @Column(name = "target_id")
+    private Long targetId;
+
+    // 대타요청 참조
+    @Column(name = "shift_swap_request_id")
+    private Long shiftSwapRequestId;
+
+    // 인력요청 참조 (옵션)
+    @Column(name = "staffing_request_id")
+    private Long staffingRequestId;
+
+    // 카테고리(프론트 필터/아이콘용)
+    @Enumerated(EnumType.STRING)
+    @Column(length = 16, nullable = false)
+    private Category category; // SHIFT_SWAP | STAFFING
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 64, nullable = false)
+    private Type type;
+
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String message;
+
+    @Column(name = "is_read", nullable = false)
+    private boolean isRead = false;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    public enum Category { SHIFT_SWAP, STAFFING }
+
+    public enum TargetType { SHIFT_SWAP_REQUEST, STAFFING_REQUEST, STAFFING_RESPONSE }
+
+    public enum Type {
+        // 대타 요청 관련
+        SHIFT_SWAP_REQUEST,
+        SHIFT_SWAP_NOTIFY_MANAGER,
+        SHIFT_SWAP_MANAGER_APPROVED_REQUESTER,
+        SHIFT_SWAP_MANAGER_APPROVED_RECEIVER,
+        SHIFT_SWAP_MANAGER_REJECTED_REQUESTER,
+        SHIFT_SWAP_MANAGER_REJECTED_RECEIVER,
+
+        // 인력 요청
+        STAFFING_REQUEST_INVITE,
+        STAFFING_NOTIFY_MANAGER,
+        STAFFING_MANAGER_APPROVED_WORKER,
+        STAFFING_MANAGER_REJECTED_WORKER,
+        STAFFING_FILLED_BROADCAST
+    }
+}

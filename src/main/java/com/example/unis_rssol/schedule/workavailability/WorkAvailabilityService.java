@@ -4,7 +4,7 @@ import com.example.unis_rssol.global.auth.AuthorizationService;
 import com.example.unis_rssol.global.exception.InvalidTimeRangeException;
 import com.example.unis_rssol.schedule.DayOfWeek;
 import com.example.unis_rssol.schedule.workavailability.dto.*;
-import com.example.unis_rssol.store.entity.UserStore;
+import com.example.unis_rssol.domain.store.entity.UserStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

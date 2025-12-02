@@ -1,7 +1,7 @@
 package com.example.unis_rssol.schedule.entity;
 
-import com.example.unis_rssol.store.entity.Store;
-import com.example.unis_rssol.store.entity.UserStore;
+import com.example.unis_rssol.domain.store.entity.Store;
+import com.example.unis_rssol.domain.store.entity.UserStore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;

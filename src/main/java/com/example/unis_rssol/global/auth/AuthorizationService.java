@@ -2,10 +2,10 @@ package com.example.unis_rssol.global.auth;
 
 import com.example.unis_rssol.global.exception.ForbiddenException;
 import com.example.unis_rssol.global.exception.NotFoundException;
-import com.example.unis_rssol.store.entity.UserStore;
-import com.example.unis_rssol.store.repository.UserStoreRepository;
-import com.example.unis_rssol.user.entity.AppUser;
-import com.example.unis_rssol.user.repository.AppUserRepository;
+import com.example.unis_rssol.domain.store.entity.UserStore;
+import com.example.unis_rssol.domain.store.repository.UserStoreRepository;
+import com.example.unis_rssol.domain.user.entity.AppUser;
+import com.example.unis_rssol.domain.user.repository.AppUserRepository;
 import org.springframework.stereotype.Service;
 
 @Service
