@@ -4,7 +4,6 @@ import com.example.unis_rssol.schedule.shift.dto.ShiftSwapManagerApprovalDto;
 import com.example.unis_rssol.schedule.shift.dto.ShiftSwapRequestCreateDto;
 import com.example.unis_rssol.schedule.shift.dto.ShiftSwapRespondDto;
 import com.example.unis_rssol.schedule.shift.dto.ShiftSwapResponseDto;
-import com.example.unis_rssol.shift.dto.*;
 import com.example.unis_rssol.schedule.shift.entity.Notification;
 import com.example.unis_rssol.schedule.shift.service.ShiftSwapService;
 import lombok.RequiredArgsConstructor;

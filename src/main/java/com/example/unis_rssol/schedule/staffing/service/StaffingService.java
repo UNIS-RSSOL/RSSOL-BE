@@ -7,7 +7,6 @@ import com.example.unis_rssol.schedule.repository.WorkShiftRepository;
 import com.example.unis_rssol.schedule.shift.entity.Notification;
 import com.example.unis_rssol.schedule.shift.repository.NotificationRepository;
 import com.example.unis_rssol.schedule.staffing.dto.*;
-import com.example.unis_rssol.staffing.dto.*;
 import com.example.unis_rssol.schedule.staffing.entity.StaffingRequest;
 import com.example.unis_rssol.schedule.staffing.entity.StaffingResponse;
 import com.example.unis_rssol.schedule.staffing.repository.StaffingRequestRepository;
