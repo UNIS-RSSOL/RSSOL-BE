@@ -12,11 +12,11 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
-        format_sql: true
+        format_sql: false
   data:
     redis:
       host: redis
@@ -38,8 +38,9 @@ logging:
     root: INFO
     org.springframework.security: INFO
     com.example.unis_rssol: INFO
-    org.hibernate.SQL: DEBUG                # SQL 쿼리만 출력
-    org.hibernate.type.descriptor.sql.BasicBinder: OFF   # 변수 바인딩 로그 끄기
+    org.hibernate.SQL: INFO                # SQL 쿼리만 출력
+    org.hibernate.orm.jdbc.bind: OFF
+    org.springframework.transaction: INFO
 
 management:
   endpoints:
