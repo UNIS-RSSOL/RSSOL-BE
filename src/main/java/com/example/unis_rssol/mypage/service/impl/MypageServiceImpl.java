@@ -161,7 +161,7 @@ public class MypageServiceImpl implements MypageService {
                 .name(s.getName())
                 .address(s.getAddress())
                 .phoneNumber(s.getPhoneNumber())
-                .businessRegistrationNumber(s.getBusinessRegistrationNumber())
+                // .businessRegistrationNumber(s.getBusinessRegistrationNumber())
                 .build();
     }
 
@@ -177,13 +177,13 @@ public class MypageServiceImpl implements MypageService {
         if (req.getAddress() != null) s.setAddress(req.getAddress());
         if (req.getPhoneNumber() != null) s.setPhoneNumber(req.getPhoneNumber());
 
-        if (req.getBusinessRegistrationNumber() != null
-                && !req.getBusinessRegistrationNumber().equals(s.getBusinessRegistrationNumber())) {
-            if (stores.existsByBusinessRegistrationNumber(req.getBusinessRegistrationNumber())) {
-                throw new IllegalArgumentException("이미 사용 중인 사업자 등록번호입니다.");
-            }
-            s.setBusinessRegistrationNumber(req.getBusinessRegistrationNumber());
-        }
+//        if (req.getBusinessRegistrationNumber() != null
+//                && !req.getBusinessRegistrationNumber().equals(s.getBusinessRegistrationNumber())) {
+//            if (stores.existsByBusinessRegistrationNumber(req.getBusinessRegistrationNumber())) {
+//                throw new IllegalArgumentException("이미 사용 중인 사업자 등록번호입니다.");
+//            }
+//            s.setBusinessRegistrationNumber(req.getBusinessRegistrationNumber());
+//        }
 
         stores.save(s);
         return getOwnerActiveStore(ownerId);
