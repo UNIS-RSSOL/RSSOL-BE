@@ -18,23 +18,22 @@ public class AuthController {
 
     private final AuthService authService;
 
+    // 카카오 OAuth2 Redirect 콜백 - 프론트에서 받은 code를 백엔드가 처리
     @GetMapping("/kakao/callback")
     public void kakaoCallback(
             @RequestParam("code") String code,
-            // ★ 중요: 프론트가 보낸 돌아갈 주소는 'state'에 담겨 옴
-            @RequestParam(value = "state", required = false) String state,
+            @RequestParam(value = "redirect_uri", required = false) String redirectUri,
             HttpServletResponse response
     ) throws IOException {
 
         LoginResponse loginResponse = authService.handleKakaoCallback(code);
 
-        // 1. state 값이 있으면 그 주소(로컬 등) 사용, 없으면 배포 주소(기본값) 사용
-        String redirectBaseUrl = (state != null && !state.isBlank())
-                ? state
-                : "https://rssol-fe.vercel.app/auth/kakao/callback";
+        // 프론트 리다이렉트 URL 없으면 기본 Vercel 배포 주소 사용
+        if (redirectUri == null || redirectUri.isBlank()) {
+            redirectUri = "https://rssol-fe.vercel.app/auth/kakao/callback";
+        }
 
-        // 2. 프론트로 토큰을 붙여서 리다이렉트
-        String targetUrl = redirectBaseUrl
+        String targetUrl = redirectUri
                 + "?accessToken=" + loginResponse.getAccessToken()
                 + "&refreshToken=" + loginResponse.getRefreshToken()
                 + "&userId=" + loginResponse.getUserId();
