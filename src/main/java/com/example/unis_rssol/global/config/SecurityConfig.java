@@ -80,6 +80,7 @@ public class SecurityConfig {
 
         // 허용할 프론트 개발 도메인
         cfg.setAllowedOrigins(List.of(
+                "https://connecti.store",
                 "http://localhost:3000",
                 "http://localhost:5173",
                 "https://rssol-fe.vercel.app"
