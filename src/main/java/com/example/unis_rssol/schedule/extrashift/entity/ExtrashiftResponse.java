@@ -28,7 +28,7 @@ public class ExtrashiftResponse {
     // 어떤 요청에 대한 응답인지
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "staffing_request_id")
-    private ExtrashiftRequest staffingRequest;
+    private ExtrashiftRequest extraShiftRequest;
 
     // 응답자(알바) - user_store 기준
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

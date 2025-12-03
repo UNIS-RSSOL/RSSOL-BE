@@ -85,7 +85,7 @@ public class ExtrashiftService {
                     .category(Notification.Category.EXTRA_SHIFT)
                     .targetType(Notification.TargetType.EXTRA_SHIFT_REQUEST)
                     .targetId(request.getId())
-                    .staffingRequestId(request.getId())
+                    .extraShiftRequestId(request.getId())
                     .type(Notification.Type.EXTRA_SHIFT_REQUEST_INVITE)
                     .message(inviteMsg)
                     .build());
@@ -103,14 +103,14 @@ public class ExtrashiftService {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("해당 사용자의 소속 매장을 찾을 수 없습니다."));
 
-        if (responseRepo.existsByStaffingRequest_IdAndCandidate_Id(requestId, candidate.getId())) {
+        if (responseRepo.existsByExtraShiftRequest_IdAndCandidate_Id(requestId, candidate.getId())) {
             throw new RuntimeException("이미 응답한 요청입니다.");
         }
 
         ExtrashiftResponse.WorkerAction action = parseWorkerAction(dto.getAction());
 
         ExtrashiftResponse response = ExtrashiftResponse.builder()
-                .staffingRequest(request)
+                .extraShiftRequest(request)
                 .candidate(candidate)
                 .workerAction(action)
                 .managerApproval(ExtrashiftResponse.ManagerApproval.PENDING)
@@ -123,7 +123,7 @@ public class ExtrashiftService {
                 .category(Notification.Category.EXTRA_SHIFT)
                 .targetType(Notification.TargetType.EXTRA_SHIFT_RESPONSE)
                 .targetId(response.getId())
-                .staffingRequestId(request.getId())
+                .extraShiftRequestId(request.getId())
                 .type(Notification.Type.EXTRA_SHIFT_NOTIFY_MANAGER)
                 .message(notifyMgrMsg)
                 .build());
@@ -180,7 +180,7 @@ public class ExtrashiftService {
                 .category(Notification.Category.EXTRA_SHIFT)
                 .targetType(Notification.TargetType.EXTRA_SHIFT_RESPONSE)
                 .targetId(response.getId())
-                .staffingRequestId(request.getId())
+                .extraShiftRequestId(request.getId())
                 .type(approved
                         ? Notification.Type.EXTRA_SHIFT_MANAGER_APPROVED_WORKER
                         : Notification.Type.EXTRA_SHIFT_MANAGER_REJECTED_WORKER)

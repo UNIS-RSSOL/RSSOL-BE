@@ -27,23 +27,23 @@ public class Notification {
     // 공통 타겟 (딥링크/라우팅용)
     @Enumerated(EnumType.STRING)
     @Column(name = "target_type", length = 32)
-    private TargetType targetType; // SHIFT_SWAP_REQUEST | STAFFING_REQUEST | STAFFING_RESPONSE
+    private TargetType targetType; // SHIFT_SWAP_REQUEST | EXTRA_SHIFT_REQUEST | EXTRA_SHIFT_RESPONSE
 
     @Column(name = "target_id")
     private Long targetId;
 
-    // 대타요청 참조
+    // 대타 요청 참조
     @Column(name = "shift_swap_request_id")
     private Long shiftSwapRequestId;
 
-    // 인력요청 참조 (옵션)
+    // 추가 인력 요청 참조 (DB 컬럼 그대로 유지)
     @Column(name = "staffing_request_id")
-    private Long staffingRequestId;
+    private Long extraShiftRequestId;
 
-    // 카테고리(프론트 필터/아이콘용)
+    // 카테고리 (프론트 필터/아이콘용)
     @Enumerated(EnumType.STRING)
     @Column(length = 16, nullable = false)
-    private Category category; // SHIFT_SWAP | STAFFING
+    private Category category; // SHIFT_SWAP | EXTRA_SHIFT
 
     @Enumerated(EnumType.STRING)
     @Column(length = 64, nullable = false)
@@ -59,9 +59,20 @@ public class Notification {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    public enum Category { SHIFT_SWAP, EXTRA_SHIFT }
+    // ==========================
+    // ENUMS
+    // ==========================
 
-    public enum TargetType { SHIFT_SWAP_REQUEST, EXTRA_SHIFT_REQUEST, EXTRA_SHIFT_RESPONSE }
+    public enum Category {
+        SHIFT_SWAP,
+        EXTRA_SHIFT
+    }
+
+    public enum TargetType {
+        SHIFT_SWAP_REQUEST,
+        EXTRA_SHIFT_REQUEST,
+        EXTRA_SHIFT_RESPONSE
+    }
 
     public enum Type {
         // 대타 요청 관련
@@ -72,7 +83,7 @@ public class Notification {
         SHIFT_SWAP_MANAGER_REJECTED_REQUESTER,
         SHIFT_SWAP_MANAGER_REJECTED_RECEIVER,
 
-        // 인력 요청
+        // 추가 인력 요청 관련
         EXTRA_SHIFT_REQUEST_INVITE,
         EXTRA_SHIFT_NOTIFY_MANAGER,
         EXTRA_SHIFT_MANAGER_APPROVED_WORKER,

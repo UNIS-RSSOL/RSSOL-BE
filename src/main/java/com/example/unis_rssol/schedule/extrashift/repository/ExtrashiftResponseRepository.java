@@ -8,8 +8,8 @@ import java.util.List;
 public interface ExtrashiftResponseRepository extends JpaRepository<ExtrashiftResponse, Long> {
 
     // 중복 응답 방지용
-    boolean existsByStaffingRequest_IdAndCandidate_Id(Long staffingRequestId, Long candidateUserStoreId);
+    boolean existsByExtraShiftRequest_IdAndCandidate_Id(Long extraShiftRequestId, Long candidateUserStoreId);
 
     // 매니저 승인 대기중(또는 전체) 응답들 조회용(필요시)
-    List<ExtrashiftResponse> findByStaffingRequest_Id(Long staffingRequestId);
+    List<ExtrashiftResponse> findByExtraShiftRequest_Id(Long extraShiftRequestId);
 }

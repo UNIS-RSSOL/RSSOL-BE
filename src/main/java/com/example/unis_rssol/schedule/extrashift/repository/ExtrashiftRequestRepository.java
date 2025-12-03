@@ -6,5 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface ExtrashiftRequestRepository extends JpaRepository<ExtrashiftRequest, Long> {
-    List<ExtrashiftRequest> findByStore_IdAndStatusOrderByCreatedAtDesc(Long storeId, ExtrashiftRequest.Status status);
+    List<ExtrashiftRequest> findByStore_IdAndStatusOrderByCreatedAtDesc(
+            Long storeId,
+            ExtrashiftRequest.Status status
+    );
 }
