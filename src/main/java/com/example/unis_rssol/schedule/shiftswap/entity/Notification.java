@@ -37,7 +37,7 @@ public class Notification {
     private Long shiftSwapRequestId;
 
     // 추가 인력 요청 참조 (DB 컬럼 그대로 유지)
-    @Column(name = "staffing_request_id")
+    @Column(name = "extra_shift_request_id")
     private Long extraShiftRequestId;
 
     // 카테고리 (프론트 필터/아이콘용)

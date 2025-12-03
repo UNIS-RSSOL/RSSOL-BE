@@ -10,24 +10,38 @@ import java.time.LocalDateTime;
 @Entity
 @Getter @Setter @Builder
 @NoArgsConstructor @AllArgsConstructor
-@Table(name = "extra_shift_responses",
+@Table(
+        name = "extra_shift_responses",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uq_staffresp_request_candidate",
-                        columnNames = {"staffing_request_id", "candidate_id"})
+                @UniqueConstraint(
+                        name = "uq_staffresp_request_candidate",
+                        columnNames = {"extra_shift_request_id", "candidate_id"}
+                )
         },
         indexes = {
-                @Index(name="idx_staffresp_request", columnList = "staffing_request_id"),
-                @Index(name="idx_staffresp_request_approval", columnList = "staffing_request_id,manager_approval"),
-                @Index(name="idx_staffresp_candidate", columnList = "candidate_id")
-        })
+                @Index(
+                        name = "idx_staffresp_request",
+                        columnList = "extra_shift_request_id"
+                ),
+                @Index(
+                        name = "idx_staffresp_request_approval",
+                        columnList = "extra_shift_request_id,manager_approval"
+                ),
+                @Index(
+                        name = "idx_staffresp_candidate",
+                        columnList = "candidate_id"
+                )
+        }
+)
 public class ExtrashiftResponse {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     // 어떤 요청에 대한 응답인지
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "staffing_request_id")
+    @JoinColumn(name = "extra_shift_request_id")
     private ExtrashiftRequest extraShiftRequest;
 
     // 응답자(알바) - user_store 기준
