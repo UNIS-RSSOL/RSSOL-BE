@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "staffing_requests",
+@Table(name = "extra_shift_requests",
         indexes = {
                 @Index(name="idx_staffreq_store_status_created", columnList = "store_id,status,created_at"),
                 @Index(name="idx_staffreq_created", columnList = "created_at")
