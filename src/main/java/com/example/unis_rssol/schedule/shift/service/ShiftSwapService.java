@@ -28,7 +28,6 @@ public class ShiftSwapService {
     private final WorkShiftRepository workShiftRepo;
     private final UserStoreRepository userStoreRepo;
 
-
     // 1. 대타 요청 생성 (후보 전원 -> 배열 응답)
     @Transactional
     public List<ShiftSwapResponseDto> create(Long userId, ShiftSwapRequestCreateDto dto) {
@@ -77,6 +76,9 @@ public class ShiftSwapService {
 
             notificationRepo.save(Notification.builder()
                     .userId(receiver.getUser().getId())
+                    .category(Notification.Category.SHIFT_SWAP)
+                    .targetType(Notification.TargetType.SHIFT_SWAP_REQUEST)
+                    .targetId(request.getId())
                     .shiftSwapRequestId(request.getId())
                     .type(Notification.Type.SHIFT_SWAP_REQUEST)
                     .message(requester.getUser().getUsername() + "님이 "
@@ -106,6 +108,9 @@ public class ShiftSwapService {
                 request.setStatus(ShiftSwapRequest.Status.REJECTED);
                 notificationRepo.save(Notification.builder()
                         .userId(request.getRequester().getUser().getId())
+                        .category(Notification.Category.SHIFT_SWAP)
+                        .targetType(Notification.TargetType.SHIFT_SWAP_REQUEST)
+                        .targetId(request.getId())
                         .shiftSwapRequestId(request.getId())
                         .type(Notification.Type.SHIFT_SWAP_MANAGER_REJECTED_REQUESTER)
                         .message("대타 요청이 거절되었습니다.")
@@ -127,6 +132,9 @@ public class ShiftSwapService {
                     notificationRepo.saveAll(List.of(
                             Notification.builder()
                                     .userId(request.getRequester().getUser().getId())
+                                    .category(Notification.Category.SHIFT_SWAP)
+                                    .targetType(Notification.TargetType.SHIFT_SWAP_REQUEST)
+                                    .targetId(request.getId())
                                     .shiftSwapRequestId(request.getId())
                                     .type(Notification.Type.SHIFT_SWAP_MANAGER_APPROVED_REQUESTER)
                                     .message("사장님이 대타 요청을 최종 승인했습니다.")
@@ -144,6 +152,9 @@ public class ShiftSwapService {
 
                     owners.forEach(owner -> notificationRepo.save(Notification.builder()
                             .userId(owner.getUser().getId())
+                            .category(Notification.Category.SHIFT_SWAP)
+                            .targetType(Notification.TargetType.SHIFT_SWAP_REQUEST)
+                            .targetId(request.getId())
                             .shiftSwapRequestId(request.getId())
                             .type(Notification.Type.SHIFT_SWAP_NOTIFY_MANAGER)
                             .message(request.getReceiver().getUser().getUsername() +
@@ -188,12 +199,18 @@ public class ShiftSwapService {
                 notificationRepo.saveAll(List.of(
                         Notification.builder()
                                 .userId(request.getRequester().getUser().getId())
+                                .category(Notification.Category.SHIFT_SWAP)
+                                .targetType(Notification.TargetType.SHIFT_SWAP_REQUEST)
+                                .targetId(request.getId())
                                 .shiftSwapRequestId(request.getId())
                                 .type(Notification.Type.SHIFT_SWAP_MANAGER_APPROVED_REQUESTER)
                                 .message("대타 요청이 사장님으로부터 최종 승인되었습니다.")
                                 .build(),
                         Notification.builder()
                                 .userId(request.getReceiver().getUser().getId())
+                                .category(Notification.Category.SHIFT_SWAP)
+                                .targetType(Notification.TargetType.SHIFT_SWAP_REQUEST)
+                                .targetId(request.getId())
                                 .shiftSwapRequestId(request.getId())
                                 .type(Notification.Type.SHIFT_SWAP_MANAGER_APPROVED_RECEIVER)
                                 .message("당신이 수락한 대타 요청이 사장님으로부터 최종 승인되었습니다.")
@@ -205,12 +222,18 @@ public class ShiftSwapService {
                 notificationRepo.saveAll(List.of(
                         Notification.builder()
                                 .userId(request.getRequester().getUser().getId())
+                                .category(Notification.Category.SHIFT_SWAP)
+                                .targetType(Notification.TargetType.SHIFT_SWAP_REQUEST)
+                                .targetId(request.getId())
                                 .shiftSwapRequestId(request.getId())
                                 .type(Notification.Type.SHIFT_SWAP_MANAGER_REJECTED_REQUESTER)
                                 .message("대타 요청이 사장님으로부터 최종 거절되었습니다.")
                                 .build(),
                         Notification.builder()
                                 .userId(request.getReceiver().getUser().getId())
+                                .category(Notification.Category.SHIFT_SWAP)
+                                .targetType(Notification.TargetType.SHIFT_SWAP_REQUEST)
+                                .targetId(request.getId())
                                 .shiftSwapRequestId(request.getId())
                                 .type(Notification.Type.SHIFT_SWAP_MANAGER_REJECTED_RECEIVER)
                                 .message("당신이 수락한 대타 요청이 사장님으로부터 거절되었습니다.")
