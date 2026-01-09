@@ -10,7 +10,7 @@ public class WorkShiftDto {
     private Long id;
     private Long userStoreId;    // userStore 객체 대신 ID만 담음
     private Long userId;
-    private String userName;
+    private String username;
     private LocalDateTime startDatetime;
     private LocalDateTime endDatetime;
     private String shiftStatus;
@@ -24,7 +24,7 @@ public class WorkShiftDto {
         this.userStoreId = ws.getUserStore() != null ? ws.getUserStore().getId() : null;
         if (ws.getUserStore().getUser() != null) {
             this.userId = ws.getUserStore().getUser().getId();
-            this.userName = ws.getUserStore().getUser().getUsername();
+            this.username = ws.getUserStore().getUser().getUsername();
         }
     }
 }

@@ -15,9 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 public class WorkAvailabilityAllResponseDto {
-
-    private Long userStoreId;
-    private String userName;
+    private String username;
     private List<AvailabilityItem> availabilities;
 
     @Getter
