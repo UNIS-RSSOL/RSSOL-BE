@@ -152,4 +152,73 @@ public class AuthService {
         user.setKakaoAccessToken(null);
         users.save(user);
     }
+
+    // 시은추가 아직 사용 X
+
+    @Transactional
+    public LoginResponse handleKakaoAppLogin(String kakaoAccessToken) {
+        log.info("handleKakaoAppLogin 시작. token={}", kakaoAccessToken.substring(0, 5) + "...");
+
+        // 1) 전달받은 accessToken으로 카카오 프로필 조회 (기존 kakao.fetchProfile 재사용)
+        SocialProfile profile = kakao.fetchProfile(kakaoAccessToken);
+
+        if (profile == null || profile.getProviderId() == null) {
+            log.error("카카오 프로필 조회 실패");
+            throw new UnauthorizedException("카카오 프로필 정보를 가져오는데 실패했습니다.");
+        }
+
+        // 2) 사용자 정보 처리 (기존 로직과 동일하게 가공)
+        String kakaoId = profile.getProviderId();
+        String finalUsername = (profile.getUsername() != null) ? profile.getUsername() : "사용자";
+        String kakaoProfileUrl = profile.getProfileImageUrl();
+        String finalProfileImageUrl = (kakaoProfileUrl == null || kakaoProfileUrl.contains("default_profile.jpeg"))
+                ? "" : kakaoProfileUrl;
+
+        // 3) DB 저장 또는 업데이트
+        AppUser user = users.findByProviderAndProviderId("kakao", kakaoId).orElse(null);
+        boolean isNewUser = (user == null);
+
+        if (isNewUser) {
+            user = users.save(AppUser.builder()
+                    .provider("kakao")
+                    .providerId(kakaoId)
+                    .username(finalUsername)
+                    .email(profile.getEmail())
+                    .profileImageUrl(finalProfileImageUrl)
+                    .kakaoAccessToken(kakaoAccessToken)
+                    .build());
+            log.info("앱 로그인: 신규 유저 생성 id={}", user.getId());
+        } else {
+            user.setKakaoAccessToken(kakaoAccessToken);
+            user.setUsername(finalUsername);
+            user.setEmail(profile.getEmail());
+            user.setProfileImageUrl(finalProfileImageUrl);
+            users.save(user);
+            log.info("앱 로그인: 기존 유저 정보 갱신 id={}", user.getId());
+        }
+
+        // 4) JWT 발급 및 Refresh Token 저장 (기존 로직과 동일)
+        String at = jwt.generateAccess(user.getId());
+        String rt = jwt.generateRefresh(user.getId());
+
+        saveRefreshToken(user, rt);
+
+        // 5) 응답 생성
+        return new LoginResponse(
+                at, rt, user.getId(), isNewUser,
+                user.getUsername(), user.getEmail(), user.getProfileImageUrl(),
+                user.getProvider(), user.getProviderId(),
+                user.getActiveStoreId()
+        );
+    }
+
+    // Refresh Token 저장 로직 공통화
+    private void saveRefreshToken(AppUser user, String rt) {
+        refreshRepo.deleteByUser(user);
+        refreshRepo.save(UserRefreshToken.builder()
+                .user(user)
+                .refreshToken(rt)
+                .expiresAt(LocalDateTime.now().plusDays(14))
+                .build());
+    }
 }

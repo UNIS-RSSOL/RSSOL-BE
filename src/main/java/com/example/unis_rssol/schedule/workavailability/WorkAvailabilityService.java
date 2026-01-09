@@ -1,5 +1,6 @@
 package com.example.unis_rssol.schedule.workavailability;
 
+import com.example.unis_rssol.domain.store.repository.UserStoreRepository;
 import com.example.unis_rssol.global.auth.AuthorizationService;
 import com.example.unis_rssol.global.exception.InvalidTimeRangeException;
 import com.example.unis_rssol.schedule.DayOfWeek;
@@ -10,10 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,6 +20,7 @@ public class WorkAvailabilityService {
 
     private final WorkAvailabilityRepository availabilityRepository;
     private final AuthorizationService authService;
+    private final UserStoreRepository userStoreRepository;
 
     @Transactional(readOnly = true)
     public WorkAvailabilityGetResponseDto getAvailability(Long userId) {
@@ -47,7 +46,12 @@ public class WorkAvailabilityService {
     @Transactional(readOnly = true)
     public List<WorkAvailabilityAllResponseDto> getAllAvailability(Long storeId) {
 
+        // 1. 매장에 속한 모든 직원
+        List<UserStore> userStores = userStoreRepository.findByStore_Id(storeId);
+        // 2. 제출한 모든 직원
         List<WorkAvailability> allAvailabilities = availabilityRepository.findByUserStore_Store_Id(storeId);
+
+        //userStoreId기준으로 근무가능시간 묶기, 아직 리스트없으면 생성(if)
         Map<Long, List<WorkAvailability>> groupedByUser = new HashMap<>();
         for (WorkAvailability avail : allAvailabilities) {
             Long userStoreId = avail.getUserStore().getId(); if (!groupedByUser.containsKey(userStoreId)) { groupedByUser.put(userStoreId, new ArrayList<>());}
@@ -55,14 +59,17 @@ public class WorkAvailabilityService {
         }
 
         List<WorkAvailabilityAllResponseDto> responseList = new ArrayList<>();
+        for (UserStore userStore : userStores) {
+            Long userStoreId = userStore.getId();
 
-        for (Map.Entry<Long, List<WorkAvailability>> entry : groupedByUser.entrySet()) {
-            WorkAvailabilityAllResponseDto userAvailabilityDto = getWorkAvailabilityAllResponseDto(entry);
+            List<WorkAvailability> userAvailabilities = groupedByUser.getOrDefault(userStoreId, new ArrayList<>());
 
-            responseList.add(userAvailabilityDto);
+            List<WorkAvailabilityAllResponseDto.AvailabilityItem> items = new ArrayList<>();
+            WorkAvailabilityAllResponseDto dto = getWorkAvailabilityAllResponseDto(userStore, userAvailabilities);
+            responseList.add(dto);
         }
-
         return responseList;
+
     }
 
 
@@ -202,24 +209,22 @@ public class WorkAvailabilityService {
         }
     }
 
-    private static WorkAvailabilityAllResponseDto getWorkAvailabilityAllResponseDto(Map.Entry<Long, List<WorkAvailability>> entry) {
-        Long userStoreId = entry.getKey();
-        List<WorkAvailability> availabilities = entry.getValue();
-
-        String userName = availabilities.get(0).getUserStore().getUser().getUsername(); //모두 같은 UserStore이니까, 첫번째에서만 추출함.
+    private static WorkAvailabilityAllResponseDto getWorkAvailabilityAllResponseDto(UserStore userStore,
+                                                                                    List<WorkAvailability> availabilities) {
+        String username = userStore.getUser().getUsername();
 
         List<WorkAvailabilityAllResponseDto.AvailabilityItem> availabilityItems = new ArrayList<>();
         for (WorkAvailability a : availabilities) {
-            WorkAvailabilityAllResponseDto.AvailabilityItem item =
+            availabilityItems.add(
                     new WorkAvailabilityAllResponseDto.AvailabilityItem(
                             a.getDayOfWeek(),
                             a.getStartTime().toString(),
                             a.getEndTime().toString()
-                    );
-            availabilityItems.add(item);
+                    )
+            );
         }
 
-        return new WorkAvailabilityAllResponseDto(userStoreId, userName, availabilityItems);
+        return new WorkAvailabilityAllResponseDto(username, availabilityItems);
     }
 
 
