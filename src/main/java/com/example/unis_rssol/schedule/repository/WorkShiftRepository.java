@@ -1,14 +1,12 @@
 package com.example.unis_rssol.schedule.repository;
 
-import com.example.unis_rssol.schedule.entity.WorkShift;
+import com.example.unis_rssol.schedule.generation.entity.WorkShift;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
-import java.time.LocalDateTime;
 
 public interface WorkShiftRepository extends JpaRepository<WorkShift, Long> {
 

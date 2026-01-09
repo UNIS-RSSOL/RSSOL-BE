@@ -1,11 +1,11 @@
 package com.example.unis_rssol.schedule.extrashift.service;
 
-import com.example.unis_rssol.schedule.entity.Schedule;
-import com.example.unis_rssol.schedule.entity.WorkShift;
+import com.example.unis_rssol.schedule.generation.entity.Schedule;
+import com.example.unis_rssol.schedule.generation.entity.WorkShift;
 import com.example.unis_rssol.schedule.repository.ScheduleRepository;
 import com.example.unis_rssol.schedule.repository.WorkShiftRepository;
-import com.example.unis_rssol.schedule.shiftswap.entity.Notification;
-import com.example.unis_rssol.schedule.shiftswap.repository.NotificationRepository;
+import com.example.unis_rssol.schedule.notification.Notification;
+import com.example.unis_rssol.schedule.notification.NotificationRepository;
 import com.example.unis_rssol.schedule.extrashift.dto.*;
 import com.example.unis_rssol.schedule.extrashift.entity.ExtrashiftRequest;
 import com.example.unis_rssol.schedule.extrashift.entity.ExtrashiftResponse;

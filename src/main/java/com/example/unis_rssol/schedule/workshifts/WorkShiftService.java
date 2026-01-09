@@ -2,7 +2,7 @@ package com.example.unis_rssol.schedule.workshifts;
 
 import com.example.unis_rssol.global.auth.AuthorizationService;
 import com.example.unis_rssol.global.exception.NotFoundException;
-import com.example.unis_rssol.schedule.entity.WorkShift;
+import com.example.unis_rssol.schedule.generation.entity.WorkShift;
 import com.example.unis_rssol.schedule.repository.WorkShiftRepository;
 import com.example.unis_rssol.schedule.workshifts.dto.WorkShiftCreateDto;
 import com.example.unis_rssol.schedule.workshifts.dto.WorkShiftDto;

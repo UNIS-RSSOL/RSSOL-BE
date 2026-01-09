@@ -1,6 +1,6 @@
 package com.example.unis_rssol.schedule.shiftswap.entity;
 
-import com.example.unis_rssol.schedule.entity.WorkShift;
+import com.example.unis_rssol.schedule.generation.entity.WorkShift;
 import com.example.unis_rssol.domain.store.entity.UserStore;
 import jakarta.persistence.*;
 import lombok.*;

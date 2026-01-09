@@ -4,11 +4,14 @@ import com.example.unis_rssol.global.auth.AuthorizationService;
 import com.example.unis_rssol.global.exception.ForbiddenException;
 import com.example.unis_rssol.global.exception.NotFoundException;
 import com.example.unis_rssol.schedule.DayOfWeek;
-import com.example.unis_rssol.schedule.entity.Schedule;
-import com.example.unis_rssol.schedule.entity.ScheduleSettingSegment;
-import com.example.unis_rssol.schedule.entity.ScheduleSettings;
-import com.example.unis_rssol.schedule.entity.WorkShift;
+import com.example.unis_rssol.schedule.generation.dto.ScheduleGenerationRequestDto;
+import com.example.unis_rssol.schedule.generation.entity.*;
 import com.example.unis_rssol.schedule.generation.dto.*;
+import com.example.unis_rssol.schedule.generation.dto.candidate.CandidateSchedule;
+import com.example.unis_rssol.schedule.generation.dto.candidate.CandidateShift;
+import com.example.unis_rssol.schedule.generation.dto.setting.ScheduleSettingSegmentRequestDto;
+import com.example.unis_rssol.schedule.generation.dto.setting.ScheduleSettingSegmentResponseDto;
+import com.example.unis_rssol.schedule.notification.NotificationService;
 import com.example.unis_rssol.schedule.repository.ScheduleRepository;
 import com.example.unis_rssol.schedule.repository.ScheduleSettingsRepository;
 import com.example.unis_rssol.schedule.repository.WorkShiftRepository;
@@ -34,6 +37,8 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
 
+import static com.example.unis_rssol.domain.store.entity.UserStore.Position.OWNER;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -46,6 +51,7 @@ public class ScheduleGenerationService {
     private final UserStoreRepository userStoreRepository;
     private final ScheduleRepository scheduleRepository;
     private final WorkShiftRepository workShiftRepository;
+    private final NotificationService notificationService;
 
     public void testRedis(List<CandidateSchedule> candidateSchedules) throws JsonProcessingException {
         String key = "candidate_schedule_test";
@@ -66,28 +72,53 @@ public class ScheduleGenerationService {
         // 이제 readList 사용 가능
         readList.forEach(System.out::println);
     }
+    //세팅&알림
     @Transactional
-    public ScheduleGenerationResponseDto createSchedules(Long userId, ScheduleGenerationRequestDto request) {
+    public ScheduleRequestResponseDto requestSchedule(Long userId, ScheduleRequestDto request) {
         Long storeId = authService.getActiveStoreIdOrThrow(userId);
-        UserStore requester = authService.getUserStoreOrThrow(userId, storeId);
+        UserStore owner = authService.getUserStoreOrThrow(userId, storeId);
         Store store = storeRepository.findById(storeId).orElseThrow(() -> new NotFoundException("존재하지 않는 매장입니다."));
 
-        if (requester.getPosition() != UserStore.Position.OWNER) {
+        if (owner.getPosition() != OWNER) {
             throw new ForbiddenException("해당 매장의 근무표를 생성할 권한이 없습니다.");
         }
 
-        // 1. schedule setting 생성 또는 가져오기
-        ScheduleSettings scheduleSettings = createOrUpdateSetting(store, request);
-        // 2. 요청에서 timeSegment 가져와서 ScheduleSettingSement 생성 및 저장 (근무표 생성 뼈대 제작 완료! - 매장 근무인원 설정 등임)
-        List<ScheduleSettingSegment> segments = createSegmentsFromRequest(scheduleSettings, request.getTimeSegments());
+        // 1. ScheduleSettings 저장 + Segment(구간) 생성
+        ScheduleSettings settings = createOrUpdateSetting(store, request);
+        createSegmentsFromRequest(settings, request.getTimeSegments());
 
-        // 3️.  후보 스케줄 생성 및 Redis 저장
-        List<CandidateSchedule> candidates = generateWeeklyCandidates(storeId, scheduleSettings, request.getGenerationOptions().getCandidateCount());
+        // 2. 상태 저장(Requested!) :요청중입니다.
+        settings.setStatus(ScheduleSettings.ScheduleStatus.REQUESTED);
+
+        // 3. 알림 생성
+        notificationService.sendScheduleInputRequest(storeId, request.getStartDate(),request.getEndDate());
+
+        return new ScheduleRequestResponseDto(settings.getId(), settings.getStatus().name());
+    }
+
+    //계산&생성
+    @Transactional
+    public ScheduleGenerationResponseDto generateSchedule(Long userId, Long settingId, ScheduleGenerationRequestDto request){
+        Long storeId = authService.getActiveStoreIdOrThrow(userId);
+        ScheduleSettings setting = scheduleSettingsRepository.findById(settingId).orElseThrow(() -> new NotFoundException("해당 매장의 스케줄 세팅이 없습니다."));
+
+        if(setting.getStatus() != ScheduleSettings.ScheduleStatus.REQUESTED){ throw new IllegalStateException("아직 요청 상태가 아닙니다.");}
+
+        // 1️. 근무 가능 시간 모두 제출됐는지 확인
+        List<Long> unsubmitted = validateAllSubmitted(storeId);
+        if (!unsubmitted.isEmpty()) {throw new IllegalStateException("아직 근무 시간표를 제출하지 않은 직원이 있습니다.");}
+
+
+        //2. 생성
+        List<CandidateSchedule> candidates = generateWeeklyCandidates(storeId, setting, request.getGenerationOptions().getCandidateCount());
+
+        setting.setStatus(ScheduleSettings.ScheduleStatus.GENERATED);
         String redisKey = saveCandidateSchedulesToRedis(storeId, candidates);
 
         // Response 생성
-        return buildResponse(scheduleSettings, storeId, segments, redisKey, candidates.size());
+        return buildResponse(setting, storeId, setting.getSegments(), redisKey, candidates.size());
     }
+
     // Redis에서 읽어올 때도 항상 JSON → 객체 변환
     public List<CandidateSchedule> getCandidateSchedules(String redisKey) {
         String jsonFromRedis = (String) redisTemplate.opsForValue().get(redisKey);
@@ -153,7 +184,7 @@ public class ScheduleGenerationService {
 
     // ==========================================================================
     @Transactional
-    protected ScheduleSettings createOrUpdateSetting(Store store, ScheduleGenerationRequestDto request) {
+    protected ScheduleSettings createOrUpdateSetting(Store store, ScheduleRequestDto request) {
         Optional<ScheduleSettings> existingOpt = scheduleSettingsRepository.findByStoreId(store.getId());
 
         ScheduleSettings scheduleSettings;
@@ -312,6 +343,24 @@ public class ScheduleGenerationService {
     private String getCurrentWeekString() {
         return java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ISO_WEEK_DATE);
     }
+
+    @Transactional(readOnly = true)
+    public List<Long> validateAllSubmitted(Long storeId) {
+        // 매장 소속 직원
+        List<UserStore> userStores = userStoreRepository.findByStore_Id(storeId);
+
+        // 근무 가능 시간 제출한 직원 ID 목록
+        List<Long> submittedUserStoreIds = workAvailabilityRepository.findDistinctUserStoreIdsByStoreId(storeId);
+
+        List<Long> unsubmitted = new ArrayList<>();
+        for (UserStore us : userStores) {
+            if (us.getPosition() == UserStore.Position.OWNER) continue; // 사장 제외
+            if (!submittedUserStoreIds.contains(us.getId())) {unsubmitted.add(us.getUser().getId());}
+        }
+
+        return unsubmitted;
+    }
+
 
 
 }

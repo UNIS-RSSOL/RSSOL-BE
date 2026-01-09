@@ -1,6 +1,6 @@
 package com.example.unis_rssol.schedule.workshifts.dto;
 
-import com.example.unis_rssol.schedule.entity.WorkShift;
+import com.example.unis_rssol.schedule.generation.entity.WorkShift;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
