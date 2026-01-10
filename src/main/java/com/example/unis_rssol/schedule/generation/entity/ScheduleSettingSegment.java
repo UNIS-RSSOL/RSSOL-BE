@@ -1,4 +1,4 @@
-package com.example.unis_rssol.schedule.entity;
+package com.example.unis_rssol.schedule.generation.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

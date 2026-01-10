@@ -1,4 +1,4 @@
-package com.example.unis_rssol.schedule.shiftswap.entity;
+package com.example.unis_rssol.schedule.notification;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,6 +24,9 @@ public class Notification {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    @Column(name = "storeId", nullable = false)
+    private Long storeId;
+
     // 공통 타겟 (딥링크/라우팅용)
     @Enumerated(EnumType.STRING)
     @Column(name = "target_type", length = 32)
@@ -43,7 +46,7 @@ public class Notification {
     // 카테고리 (프론트 필터/아이콘용)
     @Enumerated(EnumType.STRING)
     @Column(length = 16, nullable = false)
-    private Category category; // SHIFT_SWAP | EXTRA_SHIFT
+    private Category category; // SHIFT_SWAP | EXTRA_SHIFT | SCHEDULE_INPUT_REQUEST
 
     @Enumerated(EnumType.STRING)
     @Column(length = 64, nullable = false)
@@ -64,6 +67,7 @@ public class Notification {
     // ==========================
 
     public enum Category {
+        SCHEDULE_INPUT,
         SHIFT_SWAP,
         EXTRA_SHIFT
     }
@@ -75,6 +79,9 @@ public class Notification {
     }
 
     public enum Type {
+        //근무표입력요청 관련
+        SCHEDULE_INPUT_REQUEST,
+
         // 대타 요청 관련
         SHIFT_SWAP_REQUEST,
         SHIFT_SWAP_NOTIFY_MANAGER,

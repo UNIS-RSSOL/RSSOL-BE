@@ -1,14 +1,14 @@
 package com.example.unis_rssol.schedule.shiftswap.service;
 
-import com.example.unis_rssol.schedule.entity.WorkShift;
+import com.example.unis_rssol.schedule.generation.entity.WorkShift;
 import com.example.unis_rssol.schedule.repository.WorkShiftRepository;
 import com.example.unis_rssol.schedule.shiftswap.dto.ShiftSwapManagerApprovalDto;
 import com.example.unis_rssol.schedule.shiftswap.dto.ShiftSwapRequestCreateDto;
 import com.example.unis_rssol.schedule.shiftswap.dto.ShiftSwapRespondDto;
 import com.example.unis_rssol.schedule.shiftswap.dto.ShiftSwapResponseDto;
-import com.example.unis_rssol.schedule.shiftswap.entity.Notification;
+import com.example.unis_rssol.schedule.notification.Notification;
 import com.example.unis_rssol.schedule.shiftswap.entity.ShiftSwapRequest;
-import com.example.unis_rssol.schedule.shiftswap.repository.NotificationRepository;
+import com.example.unis_rssol.schedule.notification.NotificationRepository;
 import com.example.unis_rssol.schedule.shiftswap.repository.ShiftSwapRequestRepository;
 import com.example.unis_rssol.domain.store.entity.UserStore;
 import com.example.unis_rssol.domain.store.repository.UserStoreRepository;

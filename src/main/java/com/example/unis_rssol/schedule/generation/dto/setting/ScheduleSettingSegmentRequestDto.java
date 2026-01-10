@@ -1,4 +1,4 @@
-package com.example.unis_rssol.schedule.generation.dto;
+package com.example.unis_rssol.schedule.generation.dto.setting;
 
 import lombok.Getter;
 import lombok.Setter;

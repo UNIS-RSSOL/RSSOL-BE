@@ -1,4 +1,4 @@
-package com.example.unis_rssol.schedule.entity;
+package com.example.unis_rssol.schedule.generation.entity;
 
 import com.example.unis_rssol.domain.store.entity.Store;
 import jakarta.persistence.*;
@@ -27,6 +27,10 @@ public class ScheduleSettings {
     @JoinColumn(name = "store_id", nullable = false)
     private Store store;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ScheduleStatus status; //현재 근무표생성 요청상태
+
     @Column(nullable = false)
     private LocalTime openTime;
 
@@ -49,5 +53,12 @@ public class ScheduleSettings {
         this.store = store;
         this.openTime = openTime;
         this.closeTime = closeTime;
+    }
+
+
+    public enum ScheduleStatus {
+        REQUESTED,   // 입력 요청 중
+        GENERATED,   // 생성 완료
+        CONFIRMED    // 최종 확정
     }
 }

@@ -1,7 +1,10 @@
 package com.example.unis_rssol.schedule.generation;
 
-import com.example.unis_rssol.schedule.entity.Schedule;
+import com.example.unis_rssol.schedule.generation.dto.ScheduleGenerationRequestDto;
+import com.example.unis_rssol.schedule.generation.entity.Schedule;
 import com.example.unis_rssol.schedule.generation.dto.*;
+import com.example.unis_rssol.schedule.generation.dto.candidate.CandidateSchedule;
+import com.example.unis_rssol.schedule.generation.dto.candidate.ConfirmScheduleRequestDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -23,9 +26,15 @@ public class ScheduleGenerationController {
         this.service = service;
     }     //주입받아서 컨트롤러 생성한다.
 
-    @PostMapping("/generate")
-    public ResponseEntity<ScheduleGenerationResponseDto> createSchedule(@AuthenticationPrincipal Long userId, @RequestBody ScheduleGenerationRequestDto request) {
-        ScheduleGenerationResponseDto response = service.createSchedules(userId, request);
+    @PostMapping("/requests")
+    public ResponseEntity<ScheduleRequestResponseDto> requestSchedule(@AuthenticationPrincipal Long userId, @RequestBody ScheduleRequestDto request){
+        ScheduleRequestResponseDto response = service.requestSchedule(userId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/{settingId}/generate")
+    public ResponseEntity<ScheduleGenerationResponseDto> createSchedule(@AuthenticationPrincipal Long userId, @PathVariable Long settingId, @RequestBody ScheduleGenerationRequestDto request ) {
+        ScheduleGenerationResponseDto response = service.generateSchedule(userId,settingId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

@@ -1,12 +1,9 @@
-package com.example.unis_rssol.schedule.generation.dto;
+package com.example.unis_rssol.schedule.generation.dto.candidate;
 
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 // 최종 API 응답

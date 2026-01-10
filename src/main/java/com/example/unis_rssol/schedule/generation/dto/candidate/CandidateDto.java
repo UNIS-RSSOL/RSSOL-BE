@@ -1,5 +1,6 @@
-package com.example.unis_rssol.schedule.generation.dto;
+package com.example.unis_rssol.schedule.generation.dto.candidate;
 
+import com.example.unis_rssol.schedule.generation.dto.ShiftDto;
 import lombok.Getter;
 import lombok.Setter;
 
