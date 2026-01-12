@@ -4,6 +4,8 @@ import com.example.unis_rssol.domain.store.entity.Store;
 import com.example.unis_rssol.domain.store.entity.UserStore;
 import com.example.unis_rssol.domain.store.repository.StoreRepository;
 import com.example.unis_rssol.domain.store.repository.UserStoreRepository;
+import com.example.unis_rssol.domain.user.entity.AppUser;
+import com.example.unis_rssol.domain.user.repository.AppUserRepository;
 import com.example.unis_rssol.schedule.notification.dto.NotificationResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ public class NotificationService {
     private final UserStoreRepository userStoreRepository;
     private final NotificationRepository notificationRepository;
     private final StoreRepository storeRepository;
+    private final AppUserRepository userRepository;
 
     @Transactional
     public void sendScheduleInputRequest(Long storeId,  LocalDate startDate, LocalDate endDate) {
@@ -45,7 +48,7 @@ public class NotificationService {
                     .targetId(null)
 
                     .message(
-                            " 사장님이 "+  periodText + " 근무표 입력을 요청했어요! \n" +
+                            " 사장님이 "+  periodText + " 근무표 입력을 요청했어요. \n" +
                                     "근무 가능한 시간을 기입해주세요!"
                     )
                     .isRead(false)
@@ -64,10 +67,14 @@ public class NotificationService {
     // 알림 조회하기
     @Transactional(readOnly = true)
     public List<NotificationResponseDto> getNotifications(Long userId) {
+        AppUser user = userRepository.findById(userId).orElseThrow();
         List<Notification> notifications = notificationRepository.findByUserIdWithStore(userId);
         List<NotificationResponseDto> dtos = new ArrayList<>();
         for (Notification n : notifications) {
+            String profileImageUrl = user.getProfileImageUrl();
+
             NotificationResponseDto dto = NotificationResponseDto.builder()
+                    .profileImageUrl(profileImageUrl)
                     .storeName(n.getStore().getName())
                     .category(n.getCategory())
                     .type(n.getType())

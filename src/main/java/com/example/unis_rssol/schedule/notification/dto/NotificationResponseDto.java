@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class NotificationResponseDto {
 
     private String storeName;
+    private String profileImageUrl;
 
     private Notification.Category category; // SHIFT_SWAP | EXTRA_SHIFT | SCHEDULE_INPUT_REQUEST
     private Notification.Type type;
