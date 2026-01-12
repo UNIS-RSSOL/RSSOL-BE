@@ -24,7 +24,7 @@ public class Notification {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "storeId", nullable = false)
+    @Column(name = "store_id", nullable = false)
     private Long storeId;
 
     // 공통 타겟 (딥링크/라우팅용)
