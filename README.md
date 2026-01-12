@@ -3,6 +3,15 @@
 알바솔로몬은 아르바이트 근무 스케줄 자동화 및 급여 계산 지원 시스템입니다.  
 사용자(사장님/알바생) 입력을 기반으로 근무 일정을 자동 배정하고, 주휴수당 및 야간수당을 포함한 급여 집계를 제공합니다.
 
+
+
+
+
+
+
+
+
+
 ### 🌐 **개발 환경**  
 
 - OS: Windows 11  
@@ -17,8 +26,8 @@
 
 ### 🛠️ **기술 스택**  
 
-**Backend:** Java 17, Spring Boot 3, Spring Security + JWT, Spring Data JPA (Hibernate)  
-**Database / Infra:** MySQL (AWS RDS), AWS EC2, Docker, GitHub Actions (CI/CD)  
+- **Backend:** Java 17, Spring Boot 3, Spring Security + JWT, Spring Data JPA (Hibernate)  
+- **Database / Infra:** MySQL (AWS RDS), AWS EC2, Docker, GitHub Actions (CI/CD)  
 
 ### 📚 **협업 및 문서화**  
 
