@@ -4,13 +4,21 @@
 사용자(사장님/알바생) 입력을 기반으로 근무 일정을 자동 배정하고,
 주휴수당 및 야간수당을 포함한 급여 집계를 제공합니다.
 
-🚀 기술 스택
+🛠 기술 스택
+- Backend
+Java 17, Spring Boot 3
+Spring Security + JWT
+Spring Data JPA (Hibernate)
 
-Backend: Spring Boot, Spring Web, Spring Security (JWT), Spring Data JPA
-Database: MySQL (AWS RDS)
-Build Tool: Maven/Gradle
-Infra: AWS EC2, Docker, GitHub Actions
-ETC: Validation, Lombok, Spring Boot DevTools
+- Database / Infra
+MySQL (AWS RDS)
+AWS EC2
+Docker, GitHub Actions (CI/CD)
+
+- 협업 및 문서화
+GitHub (형상 관리)
+Swagger (OpenAPI) 기반 API 문서
+ERD Cloud / dbdiagram 기반 데이터베이스 설계
 
 🔑 주요 기능
 
