@@ -6,6 +6,15 @@
 
 ### 🌐 개발 환경
 
+- OS: Windows 11
+- IDE: IntelliJ IDEA
+- JDK: Java 17
+- Build Tool: Gradle
+- Database: MySQL 8.0 (AWS RDS)
+- Server: AWS EC2 (Ubuntu)
+- Container: Docker
+- CI/CD: GitHub Actions
+
 ### 🛠️ 기술 스택
 
 - Backend:
