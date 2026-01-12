@@ -27,6 +27,6 @@ public class Schedule {
     @Column(nullable = false)
     private LocalDate endDate;
 
-    @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WorkShift> workShifts = new ArrayList<>();
 }

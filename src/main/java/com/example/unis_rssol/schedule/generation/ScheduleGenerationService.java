@@ -36,6 +36,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.example.unis_rssol.domain.store.entity.UserStore.Position.OWNER;
 
@@ -145,7 +146,6 @@ public class ScheduleGenerationService {
         schedule.setStore(store);
         schedule.setStartDate(startDate);
         schedule.setEndDate(endDate);
-        scheduleRepository.save(schedule); // 먼저 저장해서 ID 확보
 
         // 2️⃣ Redis에서 CandidateSchedule 가져오기
         List<CandidateSchedule> candidates = getCandidateSchedules(candidateKey);
@@ -166,18 +166,22 @@ public class ScheduleGenerationService {
                     .orElseThrow(() -> new NotFoundException("직원 정보를 찾을 수 없습니다.")));
             ws.setStore(store);
 
+            //연관관계 조인 설정
+            ws.setSchedule(schedule);
+            schedule.getWorkShifts().add(ws);
+
             // startDate 기준 + 요일 offset 계산
             LocalDate shiftDate = startDate.plusDays(shift.getDay().getValue() - 1); // MON=1
             ws.setStartDatetime(shiftDate.atTime(shift.getStartTime()));
             ws.setEndDatetime(shiftDate.atTime(shift.getEndTime()));
 
-            workShiftRepository.save(ws);
-            schedule.getWorkShifts().add(ws);
+
         }
 
-        // 5️⃣ Schedule 최종 확정
-        scheduleRepository.save(schedule);
-        return schedule;
+        // 5️⃣ Schedule 최종 확정, cascade = ALL 이므로 WorkShift 자동 persist
+        Schedule saved = scheduleRepository.save(schedule);
+        redisTemplate.delete(candidateKey);
+        return saved;
     }
 
 
@@ -220,9 +224,9 @@ public class ScheduleGenerationService {
 
 
     public List<CandidateSchedule> generateWeeklyCandidates(Long storeId, ScheduleSettings settings, int candidateCount) {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+//        ObjectMapper mapper = new ObjectMapper();
+//        mapper.registerModule(new JavaTimeModule());
+//        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
         // 1️.  근무 가능자 로드
         List<WorkAvailability> availabilities = workAvailabilityRepository.findByUserStore_Store_Id(storeId);
@@ -233,10 +237,17 @@ public class ScheduleGenerationService {
         // 2️, 후보 스케줄 리스트
         List<CandidateSchedule> candidateSchedules = new ArrayList<>();
         // 3️. 직원 배정 횟수 기록 (공정 배분용)
-        Map<UserStore, Integer> assignmentCount = new HashMap<>();
+        Map<Long, String> userStoreUsernameMap =
+                userStoreRepository.findUserStoreIdAndUsernameByStoreId(storeId)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                row -> (Long) row[0],   // user_store.id
+                                row -> (String) row[1]  // username
+                        ));
 
         // 4️. 후보 스케줄 여러 개 생성
         for (int c = 0; c < candidateCount; c++) {
+            Map<UserStore, Integer> assignmentCount = new HashMap<>();
             CandidateSchedule candidate = new CandidateSchedule(storeId);
 
             // 1일 기준 Segment 반복
@@ -246,6 +257,7 @@ public class ScheduleGenerationService {
                 int requiredNum = seg.getRequiredStaff();
 
                 for (DayOfWeek day : DayOfWeek.values()) { // MON~SUN
+                    Set<String> assignedKeySet = new HashSet<>();
                     List<UserStore> availableStaffs = new ArrayList<>();
                     for (WorkAvailability wa : availabilities) {
                         if (wa.getDayOfWeek() == day &&
@@ -263,29 +275,27 @@ public class ScheduleGenerationService {
                     });
 
                     int assigned = 0;
-                    for (int i = 0; i < availableStaffs.size() && assigned < requiredNum; i++) {
-                        UserStore staff = availableStaffs.get(i);
+                    for (UserStore staff : availableStaffs) {
+                        if (assigned >= requiredNum) break;
 
-                        // 이미 배정 여부 체크
-                        boolean alreadyAssigned = false;
-                        for (CandidateShift sh : candidate.getShifts()) {
-                            if (sh.getDay() == day && staff.getId().equals(sh.getUserStoreId())) {
-                                alreadyAssigned = true;
-                                break;
-                            }
-                        }
+                        String key = day + "-" + staff.getId();
+                        if (assignedKeySet.contains(key)) continue;
 
-                        if (!alreadyAssigned) {
-                            CandidateShift shift = new CandidateShift(staff.getId(), day, start, end);
-                            candidate.addShift(shift);
-                            assignmentCount.put(staff, assignmentCount.getOrDefault(staff, 0) + 1);
-                            assigned++;
-                        }
+                        assignedKeySet.add(key);
+                        String username = userStoreUsernameMap.get(staff.getId());
+
+                        candidate.addShift(
+                                new CandidateShift(staff.getId(), username, day, start, end)
+                        );
+
+                        assignmentCount.put(staff,
+                                assignmentCount.getOrDefault(staff, 0) + 1);
+                        assigned++;
                     }
 
                     // 남은 자리 UNASSIGNED 처리
                     while (assigned < requiredNum) {
-                        CandidateShift shift = new CandidateShift(null, day, start, end, "UNASSIGNED");
+                        CandidateShift shift = new CandidateShift(null, null,day, start, end, "UNASSIGNED");
                         candidate.addShift(shift);
                         assigned++;
                     }

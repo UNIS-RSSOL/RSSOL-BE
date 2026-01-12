@@ -38,8 +38,8 @@ public class ScheduleGenerationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @GetMapping("/candidates/{key}")
-    public ResponseEntity<List<CandidateSchedule>> getCandidateSchedules(@PathVariable("key") String key) {
+    @GetMapping("/candidates")
+    public ResponseEntity<List<CandidateSchedule>> getCandidateSchedules(@RequestParam String key) {
         List<CandidateSchedule> candidates = service.getCandidateSchedules(key);
         return ResponseEntity.ok(candidates);
     }

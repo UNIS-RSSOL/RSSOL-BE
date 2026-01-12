@@ -3,6 +3,8 @@ package com.example.unis_rssol.domain.store.repository;
 import com.example.unis_rssol.domain.store.entity.UserStore;
 import com.example.unis_rssol.domain.store.entity.UserStore.Position;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +30,14 @@ public interface UserStoreRepository extends JpaRepository<UserStore, Long> {
 
     // store.id + position
     List<UserStore> findByStore_IdAndPosition(Long storeId, Position position);
+
+    @Query("""
+        SELECT us.id, u.username
+        FROM UserStore us
+        JOIN us.user u
+        WHERE us.store.id = :storeId
+    """)
+    List<Object[]> findUserStoreIdAndUsernameByStoreId(@Param("storeId") Long storeId);
 
 
     // ====== 레거시(기존 코드 호환) 브리지 메서드들 ======
