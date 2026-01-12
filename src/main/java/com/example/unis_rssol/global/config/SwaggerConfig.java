@@ -29,7 +29,10 @@ public class SwaggerConfig {
                 .info(new Info()
                         .title("RSSOL-BE API")
                         .version("v1")
-                        .description("RSSOL-BE API 명세서"))
+                        .description("RSSOL-BE API 명세서" +
+                                "모든 에러 응답은 GlobalExceptionHandler를 통해 공통 포맷(ApiResponse)으로 반환됩나다.\n" +
+                                "따라서 모든 error 분류와, message는 상황에 따라 다르게 출력됩니다."))
+
                 // 여기에 Security Scheme 추가
                 .components(new Components()
                 .addSecuritySchemes("bearerAuth",

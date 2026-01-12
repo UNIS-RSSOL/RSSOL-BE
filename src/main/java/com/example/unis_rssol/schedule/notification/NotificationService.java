@@ -24,6 +24,7 @@ public class NotificationService {
     @Transactional
     public void sendScheduleInputRequest(Long storeId,  LocalDate startDate, LocalDate endDate) {
 
+        Store store = storeRepository.findById(storeId).orElseThrow(() -> new IllegalArgumentException("매장을 찾을 수 없습니다."));
         List<UserStore> userStores = userStoreRepository.findByStore_Id(storeId);
         String periodText = formatPeriod(startDate, endDate);
 
@@ -34,7 +35,7 @@ public class NotificationService {
 
             Notification notification = Notification.builder()
                     .userId(us.getUser().getId())
-                    .storeId(storeId)
+                    .store(store)
 
                     .category(Notification.Category.SCHEDULE_INPUT)
                     .type(Notification.Type.SCHEDULE_INPUT_REQUEST)
@@ -63,11 +64,11 @@ public class NotificationService {
     // 알림 조회하기
     @Transactional(readOnly = true)
     public List<NotificationResponseDto> getNotifications(Long userId) {
-        List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        List<Notification> notifications = notificationRepository.findByUserIdWithStore(userId);
         List<NotificationResponseDto> dtos = new ArrayList<>();
         for (Notification n : notifications) {
             NotificationResponseDto dto = NotificationResponseDto.builder()
-                    .storeName(storeRepository.findById(n.getStoreId()).map(Store::getName).orElse("Unknown"))
+                    .storeName(n.getStore().getName())
                     .category(n.getCategory())
                     .type(n.getType())
                     .message(n.getMessage())

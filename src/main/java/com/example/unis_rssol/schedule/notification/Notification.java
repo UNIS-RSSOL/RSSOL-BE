@@ -1,5 +1,6 @@
 package com.example.unis_rssol.schedule.notification;
 
+import com.example.unis_rssol.domain.store.entity.Store;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -24,8 +25,9 @@ public class Notification {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "store_id", nullable = false)
-    private Long storeId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "store_id", nullable = false)
+    private Store store;
 
     // 공통 타겟 (딥링크/라우팅용)
     @Enumerated(EnumType.STRING)
