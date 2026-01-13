@@ -1,34 +1,35 @@
 package com.example.unis_rssol.schedule.notification.dto;
 
-
+import com.example.unis_rssol.schedule.extrashift.entity.ExtrashiftRequest;
+import com.example.unis_rssol.schedule.shiftswap.entity.ShiftSwapRequest;
 import com.example.unis_rssol.schedule.notification.Notification;
-import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
 @Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class NotificationResponseDto {
 
     private String storeName;
     private String profileImageUrl;
 
-    private Notification.Category category; // SHIFT_SWAP | EXTRA_SHIFT | SCHEDULE_INPUT_REQUEST
+    private Notification.Category category;
     private Notification.Type type;
     private String message;
 
     private LocalDateTime createdAt;
 
-    // 대타 요청일 경우 사용
+    // ===== 요청 ID =====
     private Long shiftSwapRequestId;
-
-    // 추가 인력 요청일 경우 사용
     private Long extraShiftRequestId;
 
+    // ===== 상태 (프론트 버튼 제어용) =====
+    private ShiftSwapRequest.Status shiftSwapStatus;
+    private ShiftSwapRequest.ManagerApproval shiftSwapManagerApprovalStatus;
+    private ExtrashiftRequest.Status extraShiftStatus;
+
     private boolean isRead;
-
 }
-
