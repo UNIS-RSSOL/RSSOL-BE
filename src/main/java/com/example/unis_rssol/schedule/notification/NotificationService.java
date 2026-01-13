@@ -80,6 +80,8 @@ public class NotificationService {
                     .type(n.getType())
                     .message(n.getMessage())
                     .createdAt(n.getCreatedAt())
+                    .shiftSwapRequestId(n.getShiftSwapRequestId())
+                    .extraShiftRequestId(n.getExtraShiftRequestId())
                     .isRead(n.isRead())
                     .build();
 

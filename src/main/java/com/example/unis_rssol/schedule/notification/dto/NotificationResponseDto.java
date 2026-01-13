@@ -22,6 +22,12 @@ public class NotificationResponseDto {
 
     private LocalDateTime createdAt;
 
+    // 대타 요청일 경우 사용
+    private Long shiftSwapRequestId;
+
+    // 추가 인력 요청일 경우 사용
+    private Long extraShiftRequestId;
+
     private boolean isRead;
 
 }
