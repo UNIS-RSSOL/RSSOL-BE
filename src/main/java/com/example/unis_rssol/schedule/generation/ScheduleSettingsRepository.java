@@ -1,4 +1,4 @@
-package com.example.unis_rssol.schedule.repository;
+package com.example.unis_rssol.schedule.generation;
 
 import com.example.unis_rssol.schedule.generation.entity.ScheduleSettings;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -12,9 +12,7 @@ import com.example.unis_rssol.schedule.generation.dto.candidate.CandidateShift;
 import com.example.unis_rssol.schedule.generation.dto.setting.ScheduleSettingSegmentRequestDto;
 import com.example.unis_rssol.schedule.generation.dto.setting.ScheduleSettingSegmentResponseDto;
 import com.example.unis_rssol.schedule.notification.NotificationService;
-import com.example.unis_rssol.schedule.repository.ScheduleRepository;
-import com.example.unis_rssol.schedule.repository.ScheduleSettingsRepository;
-import com.example.unis_rssol.schedule.repository.WorkShiftRepository;
+import com.example.unis_rssol.schedule.workshifts.WorkShiftRepository;
 import com.example.unis_rssol.schedule.workavailability.WorkAvailability;
 import com.example.unis_rssol.schedule.workavailability.WorkAvailabilityRepository;
 import com.example.unis_rssol.domain.store.entity.Store;
@@ -139,6 +137,11 @@ public class ScheduleGenerationService {
     @Transactional
     public Schedule finalizeCandidateSchedule(Long storeId, String candidateKey,
                                               LocalDate startDate, LocalDate endDate) {
+
+        // 0️⃣ 기존 근무블록 삭제
+        workShiftRepository.deleteOverlappingShifts(storeId, startDate, endDate);
+
+
         // 1️⃣ Schedule 엔티티 생성
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new NotFoundException("매장을 찾을 수 없습니다."));

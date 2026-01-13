@@ -1,7 +1,7 @@
 package com.example.unis_rssol.schedule.shiftswap.service;
 
 import com.example.unis_rssol.schedule.generation.entity.WorkShift;
-import com.example.unis_rssol.schedule.repository.WorkShiftRepository;
+import com.example.unis_rssol.schedule.workshifts.WorkShiftRepository;
 import com.example.unis_rssol.schedule.shiftswap.dto.ShiftSwapManagerApprovalDto;
 import com.example.unis_rssol.schedule.shiftswap.dto.ShiftSwapRequestCreateDto;
 import com.example.unis_rssol.schedule.shiftswap.dto.ShiftSwapRespondDto;
