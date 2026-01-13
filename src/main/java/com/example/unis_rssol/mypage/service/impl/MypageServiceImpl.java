@@ -216,6 +216,7 @@ public class MypageServiceImpl implements MypageService {
                 .user(owner).store(store)
                 .position(Position.OWNER)
                 .employmentStatus(EmploymentStatus.HIRED)
+                .hireDate(req.getHireDate())
                 .build();
         userStores.save(link);
 
@@ -228,6 +229,7 @@ public class MypageServiceImpl implements MypageService {
                 .businessRegistrationNumber(store.getBusinessRegistrationNumber())
                 .position("OWNER")
                 .employmentStatus("HIRED")
+                .hireDate(link.getHireDate())
                 .build();
     }
 
@@ -349,6 +351,7 @@ public class MypageServiceImpl implements MypageService {
                 .user(staff).store(store)
                 .position(Position.STAFF)
                 .employmentStatus(EmploymentStatus.HIRED)
+                .hireDate(req.getHireDate())
                 .build();
         userStores.save(link);
 
@@ -361,6 +364,7 @@ public class MypageServiceImpl implements MypageService {
                 .businessRegistrationNumber(store.getBusinessRegistrationNumber())
                 .position("STAFF")
                 .employmentStatus("HIRED")
+                .hireDate(link.getHireDate())
                 .build();
     }
 

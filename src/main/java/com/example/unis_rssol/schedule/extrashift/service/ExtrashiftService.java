@@ -37,7 +37,7 @@ public class ExtrashiftService {
 
     private static final DateTimeFormatter DT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
-    // 1. 사장님 추가 인력 요청 (해당 시간대에 전혀 겹치지 않는 알바에게만 알림)
+    // 1. 사장님 추가 인력 요청
     @Transactional
     public ExtrashiftRequestDetailDto create(Long ownerUserId, ExtrashiftCreateDto dto) {
         UserStore ownerStore = userStoreRepo.findByUser_Id(ownerUserId).stream()
@@ -45,14 +45,12 @@ public class ExtrashiftService {
                 .orElseThrow(() -> new RuntimeException("사장님의 소속 매장을 찾을 수 없습니다."));
 
         WorkShift baseShift = workShiftRepo.findById(dto.getShiftId())
-                .orElseThrow(() -> new RuntimeException("기준 근무(shiftId=" + dto.getShiftId() + ")를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException("기준 근무를 찾을 수 없습니다."));
 
-        // 매장 내 전체 STAFF
         List<UserStore> allStaff = userStoreRepo.findByStore_IdAndPosition(
                 ownerStore.getStore().getId(), Position.STAFF
         );
 
-        // 해당 시간대에 1초라도 겹치는 알바 제외
         List<Long> receiverUserIds = allStaff.stream()
                 .filter(staff -> !workShiftRepo.existsByUserStore_IdAndStartDatetimeLessThanAndEndDatetimeGreaterThan(
                         staff.getId(),
@@ -72,16 +70,19 @@ public class ExtrashiftService {
                 .headcountFilled(0)
                 .status(ExtrashiftRequest.Status.OPEN)
                 .note(dto.getNote())
-                .receiverUserIds(receiverUserIds.stream().map(String::valueOf).collect(Collectors.joining(",")))
+                .receiverUserIds(receiverUserIds.stream()
+                        .map(String::valueOf)
+                        .collect(Collectors.joining(",")))
                 .build();
 
         requestRepo.save(request);
 
-        // 알림 전송 (필터된 대상 - 추가 인력 요청을 받을 알바에게만)
+        // 알바 초대 알림
         String inviteMsg = buildStaffInviteMessage(request);
         for (Long receiverId : receiverUserIds) {
             notificationRepo.save(Notification.builder()
                     .userId(receiverId)
+                    .store(request.getStore())
                     .category(Notification.Category.EXTRA_SHIFT)
                     .targetType(Notification.TargetType.EXTRA_SHIFT_REQUEST)
                     .targetId(request.getId())
@@ -90,10 +91,11 @@ public class ExtrashiftService {
                     .message(inviteMsg)
                     .build());
         }
+
         return toRequestDetailDto(request);
     }
 
-    // 2. 알바생 - 추가 인력 요청에 대해 1차 수락/거절 응답
+    // 2. 알바 응답 (수락 / 거절)
     @Transactional
     public ExtrashiftResponseDetailDto respond(Long userId, Long requestId, ExtrashiftRespondDto dto) {
         ExtrashiftRequest request = requestRepo.findById(requestId)
@@ -101,25 +103,26 @@ public class ExtrashiftService {
 
         UserStore candidate = userStoreRepo.findByUser_Id(userId).stream()
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("해당 사용자의 소속 매장을 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException("소속 매장을 찾을 수 없습니다."));
 
         if (responseRepo.existsByExtraShiftRequest_IdAndCandidate_Id(requestId, candidate.getId())) {
             throw new RuntimeException("이미 응답한 요청입니다.");
         }
 
-        ExtrashiftResponse.WorkerAction action = parseWorkerAction(dto.getAction());
-
         ExtrashiftResponse response = ExtrashiftResponse.builder()
                 .extraShiftRequest(request)
                 .candidate(candidate)
-                .workerAction(action)
+                .workerAction(parseWorkerAction(dto.getAction()))
                 .managerApproval(ExtrashiftResponse.ManagerApproval.PENDING)
                 .build();
+
         responseRepo.save(response);
 
+        // 사장 알림
         String notifyMgrMsg = buildManagerNotifyMessage(request, response);
         notificationRepo.save(Notification.builder()
                 .userId(request.getOwner().getUser().getId())
+                .store(request.getStore())
                 .category(Notification.Category.EXTRA_SHIFT)
                 .targetType(Notification.TargetType.EXTRA_SHIFT_RESPONSE)
                 .targetId(response.getId())
@@ -131,20 +134,24 @@ public class ExtrashiftService {
         return ExtrashiftResponseDetailDto.of(request, response);
     }
 
-    // 3. 사장님 - 수락/거절 최종 승인
+    // 3. 사장 최종 승인 / 거절
     @Transactional
-    public ExtrashiftManagerApprovalDetailDto managerApproval(Long ownerUserId, Long requestId, ExtrashiftManagerApprovalDto dto) {
+    public ExtrashiftManagerApprovalDetailDto managerApproval(
+            Long ownerUserId, Long requestId, ExtrashiftManagerApprovalDto dto) {
+
         ExtrashiftRequest request = requestRepo.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("요청 데이터를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException("요청을 찾을 수 없습니다."));
 
         if (!request.getOwner().getUser().getId().equals(ownerUserId)) {
-            throw new RuntimeException("해당 요청에 대한 승인 권한이 없습니다.");
+            throw new RuntimeException("승인 권한이 없습니다.");
         }
 
         ExtrashiftResponse response = responseRepo.findById(dto.getResponseId())
                 .orElseThrow(() -> new RuntimeException("응답 데이터를 찾을 수 없습니다."));
 
-        boolean approved = "APPROVE".equalsIgnoreCase(dto.getAction()) || "APPROVED".equalsIgnoreCase(dto.getAction());
+        boolean approved = "APPROVE".equalsIgnoreCase(dto.getAction())
+                || "APPROVED".equalsIgnoreCase(dto.getAction());
+
         response.setManagerApproval(approved
                 ? ExtrashiftResponse.ManagerApproval.APPROVED
                 : ExtrashiftResponse.ManagerApproval.REJECTED);
@@ -160,7 +167,7 @@ public class ExtrashiftService {
             requestRepo.save(request);
 
             WorkShift baseShift = workShiftRepo.findById(request.getBaseShiftId())
-                    .orElseThrow(() -> new RuntimeException("기준 근무(shiftId=" + request.getBaseShiftId() + ")를 찾을 수 없습니다."));
+                    .orElseThrow(() -> new RuntimeException("기준 근무를 찾을 수 없습니다."));
 
             Schedule schedule = baseShift.getSchedule();
 
@@ -171,12 +178,15 @@ public class ExtrashiftService {
             newShift.setEndDatetime(request.getEndDatetime());
             newShift.setShiftStatus(WorkShift.ShiftStatus.SCHEDULED);
             workShiftRepo.save(newShift);
+
             shiftAssigned = true;
         }
 
+        // 알바 결과 알림
         String workerMsg = buildWorkerResultMessage(request, response, shiftAssigned);
         notificationRepo.save(Notification.builder()
                 .userId(response.getCandidate().getUser().getId())
+                .store(request.getStore())
                 .category(Notification.Category.EXTRA_SHIFT)
                 .targetType(Notification.TargetType.EXTRA_SHIFT_RESPONSE)
                 .targetId(response.getId())
@@ -193,11 +203,11 @@ public class ExtrashiftService {
     // ===== Helper =====
     private ExtrashiftResponse.WorkerAction parseWorkerAction(String action) {
         if (action == null) return ExtrashiftResponse.WorkerAction.NONE;
-        switch (action.toUpperCase(Locale.ROOT)) {
-            case "ACCEPT": return ExtrashiftResponse.WorkerAction.ACCEPT;
-            case "REJECT": return ExtrashiftResponse.WorkerAction.REJECT;
-            default: return ExtrashiftResponse.WorkerAction.NONE;
-        }
+        return switch (action.toUpperCase(Locale.ROOT)) {
+            case "ACCEPT" -> ExtrashiftResponse.WorkerAction.ACCEPT;
+            case "REJECT" -> ExtrashiftResponse.WorkerAction.REJECT;
+            default -> ExtrashiftResponse.WorkerAction.NONE;
+        };
     }
 
     private ExtrashiftRequestDetailDto toRequestDetailDto(ExtrashiftRequest req) {
@@ -225,36 +235,36 @@ public class ExtrashiftService {
                 .collect(Collectors.toList());
     }
 
-    // ==== 알림 메시지 빌더 ====
+    // ===== 알림 메시지 =====
     private String buildStaffInviteMessage(ExtrashiftRequest req) {
         String when = req.getStartDatetime().format(DT) + " ~ " + req.getEndDatetime().format(DT);
-        String store = req.getStore().getName();
-        return String.format("사장님이 %s / %s 에 대해 인력을 요청했습니다.", store, when);
+        return String.format("사장님이 %s / %s 에 대해 인력을 요청했습니다.",
+                req.getStore().getName(), when);
     }
 
     private String buildManagerNotifyMessage(ExtrashiftRequest req, ExtrashiftResponse resp) {
         String when = req.getStartDatetime().format(DT) + " ~ " + req.getEndDatetime().format(DT);
-        String store = req.getStore().getName();
-        String worker = resp.getCandidate().getUser().getUsername();
         String actionKo = switch (resp.getWorkerAction()) {
             case ACCEPT -> "수락";
             case REJECT -> "거절";
             default -> "응답";
         };
-        return String.format("%s 님이 %s / %s 에 대한 인력 요청을 %s했습니다.", worker, store, when, actionKo);
+        return String.format("%s 님이 %s / %s 인력 요청을 %s했습니다.",
+                resp.getCandidate().getUser().getUsername(),
+                req.getStore().getName(), when, actionKo);
     }
 
-    private String buildWorkerResultMessage(ExtrashiftRequest req, ExtrashiftResponse resp, boolean shiftAssigned) {
+    private String buildWorkerResultMessage(
+            ExtrashiftRequest req, ExtrashiftResponse resp, boolean shiftAssigned) {
+
         String when = req.getStartDatetime().format(DT) + " ~ " + req.getEndDatetime().format(DT);
-        String store = req.getStore().getName();
-        boolean approved = resp.getManagerApproval() == ExtrashiftResponse.ManagerApproval.APPROVED;
-        if (approved) {
-            return String.format("사장님이 %s / %s 에 대한 인력 요청을 승인했습니다.%s",
-                    store, when, shiftAssigned ? "\n근무가 자동 배정되었습니다." : "");
-        } else if (resp.getManagerApproval() == ExtrashiftResponse.ManagerApproval.REJECTED) {
-            return String.format("사장님이 %s / %s 에 대한 인력 요청을 거절했습니다.", store, when);
+        if (resp.getManagerApproval() == ExtrashiftResponse.ManagerApproval.APPROVED) {
+            return String.format("사장님이 %s / %s 인력 요청을 승인했습니다.%s",
+                    req.getStore().getName(), when,
+                    shiftAssigned ? "\n근무가 자동 배정되었습니다." : "");
         } else {
-            return String.format("사장님 승인 대기 중입니다. (%s / %s)", store, when);
+            return String.format("사장님이 %s / %s 인력 요청을 거절했습니다.",
+                    req.getStore().getName(), when);
         }
     }
 }

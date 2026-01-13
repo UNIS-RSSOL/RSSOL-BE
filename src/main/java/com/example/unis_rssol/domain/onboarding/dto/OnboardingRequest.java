@@ -19,6 +19,6 @@ public class OnboardingRequest {
     private Integer bankId;
     private String accountNumber;
 
-    // 알바생일 경우 입사날짜 작성
+    // 입사날짜 작성
     private LocalDate hireDate;
 }

@@ -2,6 +2,8 @@ package com.example.unis_rssol.mypage.dto;
 
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Getter @Setter @Builder
 @AllArgsConstructor @NoArgsConstructor
 public class StoreSimpleResponse {
@@ -16,4 +18,6 @@ public class StoreSimpleResponse {
     // 등록 응답에서는 null로 둘 수 있음 ㅇㅇ (등록 응답에서 employmentStatus 제외)
     private String position;           // OWNER or STAFF
     private String employmentStatus;   // HIRED | ON_LEAVE | RESIGNED
+
+    private LocalDate hireDate;
 }

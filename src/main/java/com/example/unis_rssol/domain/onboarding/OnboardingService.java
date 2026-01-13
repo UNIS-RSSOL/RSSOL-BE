@@ -31,11 +31,12 @@ public class OnboardingService {
 
     @Transactional
     public OnboardingResponse onboard(Long userId, OnboardingRequest req) {
+
         AppUser user = users.findById(userId).orElseThrow();
 
         Store store;
         if ("OWNER".equalsIgnoreCase(req.getRole())) {
-            // 사장: 매장 새로 생성
+
             store = Store.builder()
                     .storeCode(StoreCodeGenerator.generate())
                     .name(req.getName())
@@ -46,9 +47,10 @@ public class OnboardingService {
             stores.save(store);
 
         } else if ("STAFF".equalsIgnoreCase(req.getRole())) {
-            // 알바: 매장 코드로 참여
+
             store = stores.findByStoreCode(req.getStoreCode())
                     .orElseThrow(() -> new IllegalArgumentException("Invalid store code"));
+
         } else {
             throw new IllegalArgumentException("Invalid role: " + req.getRole());
         }
@@ -58,14 +60,14 @@ public class OnboardingService {
                 .store(store)
                 .position(UserStore.Position.valueOf(req.getRole().toUpperCase()))
                 .employmentStatus(UserStore.EmploymentStatus.HIRED)
-                .hireDate("STAFF".equalsIgnoreCase(req.getRole()) ? req.getHireDate() : null)
+                .hireDate(req.getHireDate())
                 .build();
 
         userStores.save(link);
 
         // 활성 매장 설정
         user.setActiveStoreId(store.getId());
-//        users.save(user);
+        users.save(user);
 
         // 계좌 저장 (선택)
         Bank bank = null;
@@ -73,19 +75,27 @@ public class OnboardingService {
         if (req.getBankId() != null && req.getAccountNumber() != null) {
             bank = banks.findById(req.getBankId())
                     .orElseThrow(() -> new IllegalArgumentException("Invalid bank id"));
-            account = accounts.save(BankAccount.builder()
-                    .user(user)
-                    .bank(bank)
-                    .accountNumber(req.getAccountNumber())
-                    .build());
+            account = accounts.save(
+                    BankAccount.builder()
+                            .user(user)
+                            .bank(bank)
+                            .accountNumber(req.getAccountNumber())
+                            .build()
+            );
         }
+
         userProfileService.updateDefaultImageForRole(user, req.getRole().toUpperCase());
 
         return new OnboardingResponse(
-                user.getId(), link.getId(), store.getId(),
-                req.getRole().toUpperCase(), "HIRED",
-                store.getStoreCode(), store.getName(),
-                store.getAddress(), store.getPhoneNumber(),
+                user.getId(),
+                link.getId(),
+                store.getId(),
+                req.getRole().toUpperCase(),
+                "HIRED",
+                store.getStoreCode(),
+                store.getName(),
+                store.getAddress(),
+                store.getPhoneNumber(),
                 store.getBusinessRegistrationNumber(),
                 bank != null ? bank.getId() : null,
                 bank != null ? bank.getBankName() : null,
