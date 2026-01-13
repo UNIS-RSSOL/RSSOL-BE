@@ -199,6 +199,7 @@ public class ScheduleGenerationService {
             scheduleSettings.setOpenTime(request.getOpenTime());
             scheduleSettings.setCloseTime(request.getCloseTime());
             scheduleSettings.getSegments().clear(); // segments 새로 설정
+            scheduleSettings.setStatus(ScheduleSettings.ScheduleStatus.REQUESTED);
         } else {
             scheduleSettings = new ScheduleSettings(store, request.getOpenTime(), request.getCloseTime());
             scheduleSettings.setStatus(ScheduleSettings.ScheduleStatus.REQUESTED);
