@@ -87,7 +87,7 @@ public class ScheduleGenerationService {
         createSegmentsFromRequest(settings, request.getTimeSegments());
 
         // 3. 알림 생성
-        notificationService.sendScheduleInputRequest(storeId, request.getStartDate(),request.getEndDate());
+        notificationService.sendScheduleInputRequest(userId,storeId, request.getStartDate(),request.getEndDate());
 
         return new ScheduleRequestResponseDto(settings.getId(), settings.getStatus().name());
     }

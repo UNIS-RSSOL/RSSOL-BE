@@ -1,5 +1,7 @@
 package com.example.unis_rssol.schedule.extrashift.service;
 
+import com.example.unis_rssol.domain.user.entity.AppUser;
+import com.example.unis_rssol.domain.user.repository.AppUserRepository;
 import com.example.unis_rssol.schedule.generation.entity.Schedule;
 import com.example.unis_rssol.schedule.generation.entity.WorkShift;
 import com.example.unis_rssol.schedule.generation.ScheduleRepository;
@@ -34,12 +36,14 @@ public class ExtrashiftService {
     private final ScheduleRepository scheduleRepo;
     private final UserStoreRepository userStoreRepo;
     private final NotificationRepository notificationRepo;
+    private final AppUserRepository userRepository;
 
     private static final DateTimeFormatter DT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     // 1. 사장님 추가 인력 요청
     @Transactional
     public ExtrashiftRequestDetailDto create(Long ownerUserId, ExtrashiftCreateDto dto) {
+        AppUser requester = userRepository.findById(ownerUserId).orElseThrow(() -> new IllegalArgumentException("요청자 유저를 찾을 수 없습니다."));
         UserStore ownerStore = userStoreRepo.findByUser_Id(ownerUserId).stream()
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("사장님의 소속 매장을 찾을 수 없습니다."));
@@ -89,6 +93,7 @@ public class ExtrashiftService {
                     .extraShiftRequestId(request.getId())
                     .type(Notification.Type.EXTRA_SHIFT_REQUEST_INVITE)
                     .message(inviteMsg)
+                    .requester(requester) //프로필이미지파싱용
                     .build());
         }
 
@@ -98,6 +103,7 @@ public class ExtrashiftService {
     // 2. 알바 응답 (수락 / 거절)
     @Transactional
     public ExtrashiftResponseDetailDto respond(Long userId, Long requestId, ExtrashiftRespondDto dto) {
+        AppUser requester = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("요청자 유저를 찾을 수 없습니다."));
         ExtrashiftRequest request = requestRepo.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("인력 요청을 찾을 수 없습니다."));
 
@@ -129,6 +135,7 @@ public class ExtrashiftService {
                 .extraShiftRequestId(request.getId())
                 .type(Notification.Type.EXTRA_SHIFT_NOTIFY_MANAGER)
                 .message(notifyMgrMsg)
+                        .requester(requester)
                 .build());
 
         return ExtrashiftResponseDetailDto.of(request, response);
@@ -138,6 +145,7 @@ public class ExtrashiftService {
     @Transactional
     public ExtrashiftManagerApprovalDetailDto managerApproval(
             Long ownerUserId, Long requestId, ExtrashiftManagerApprovalDto dto) {
+        AppUser requester = userRepository.findById(ownerUserId).orElseThrow(() -> new IllegalArgumentException("요청자 유저를 찾을 수 없습니다."));
 
         ExtrashiftRequest request = requestRepo.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("요청을 찾을 수 없습니다."));
@@ -195,6 +203,7 @@ public class ExtrashiftService {
                         ? Notification.Type.EXTRA_SHIFT_MANAGER_APPROVED_WORKER
                         : Notification.Type.EXTRA_SHIFT_MANAGER_REJECTED_WORKER)
                 .message(workerMsg)
+                        .requester(requester)
                 .build());
 
         return ExtrashiftManagerApprovalDetailDto.of(request, response, shiftAssigned);

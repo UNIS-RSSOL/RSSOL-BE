@@ -32,10 +32,12 @@ public class NotificationService {
 
     // 근무표 입력 요청 알림
     @Transactional
-    public void sendScheduleInputRequest(Long storeId, LocalDate startDate, LocalDate endDate) {
+    public void sendScheduleInputRequest(Long requesterId,Long storeId, LocalDate startDate, LocalDate endDate) {
 
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new IllegalArgumentException("매장을 찾을 수 없습니다."));
+
+        AppUser requester = userRepository.findById(requesterId).orElseThrow(() -> new IllegalArgumentException("요청자 유저를 찾을 수 없습니다."));
 
         List<UserStore> userStores = userStoreRepository.findByStore_Id(storeId);
         String periodText = formatPeriod(startDate, endDate);
@@ -44,7 +46,8 @@ public class NotificationService {
             if (us.getPosition() == UserStore.Position.OWNER) continue;
 
             Notification notification = Notification.builder()
-                    .userId(us.getUser().getId())
+                    .userId(us.getUser().getId()) //수신자
+                    .requester(requester)       // 알림 requester발생자 (AppUser 엔티티)
                     .store(store)
                     .category(Notification.Category.SCHEDULE_INPUT)
                     .type(Notification.Type.SCHEDULE_INPUT_REQUEST)
@@ -75,10 +78,8 @@ public class NotificationService {
         List<NotificationResponseDto> dtos = new ArrayList<>();
 
         for (Notification n : notifications) {
-
             ShiftSwapRequest shiftSwap = null;
             ExtrashiftRequest extraShift = null;
-
             if (n.getShiftSwapRequestId() != null) {
                 shiftSwap = shiftSwapRequestRepository
                         .findById(n.getShiftSwapRequestId())
@@ -92,7 +93,11 @@ public class NotificationService {
             }
 
             NotificationResponseDto dto = NotificationResponseDto.builder()
-                    .profileImageUrl(user.getProfileImageUrl())
+                    .profileImageUrl(
+                            n.getRequester() != null
+                                    ? n.getRequester().getProfileImageUrl()
+                                    : null
+                    )
                     .storeName(n.getStore() != null ? n.getStore().getName() : null)
                     .category(n.getCategory())
                     .type(n.getType())

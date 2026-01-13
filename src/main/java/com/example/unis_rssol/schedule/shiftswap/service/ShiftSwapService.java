@@ -1,5 +1,7 @@
 package com.example.unis_rssol.schedule.shiftswap.service;
 
+import com.example.unis_rssol.domain.user.entity.AppUser;
+import com.example.unis_rssol.domain.user.repository.AppUserRepository;
 import com.example.unis_rssol.schedule.generation.entity.WorkShift;
 import com.example.unis_rssol.schedule.workshifts.WorkShiftRepository;
 import com.example.unis_rssol.schedule.shiftswap.dto.ShiftSwapManagerApprovalDto;
@@ -27,10 +29,12 @@ public class ShiftSwapService {
     private final NotificationRepository notificationRepo;
     private final WorkShiftRepository workShiftRepo;
     private final UserStoreRepository userStoreRepo;
+    private final AppUserRepository userRepository;
 
     // 1. 대타 요청 생성 (후보 전원 -> 배열 응답)
     @Transactional
     public List<ShiftSwapResponseDto> create(Long userId, ShiftSwapRequestCreateDto dto) {
+        AppUser req1 = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("요청자 유저를 찾을 수 없습니다."));
         WorkShift shift = workShiftRepo.findById(dto.getShiftId())
                 .orElseThrow(() -> new RuntimeException("해당 근무를 찾을 수 없습니다."));
 
@@ -83,6 +87,7 @@ public class ShiftSwapService {
                             + start.toLocalDate() + " " + start.toLocalTime()
                             + " 근무 대타를 요청했습니다.")
                     .isRead(false)
+                    .requester(req1)
                     .build());
 
             results.add(ShiftSwapResponseDto.from(request));
@@ -94,6 +99,7 @@ public class ShiftSwapService {
     // 2. 알바생 수락/거절 1차 응답
     @Transactional
     public ShiftSwapResponseDto respond(Long userId, Long requestId, ShiftSwapRespondDto dto) {
+        AppUser requester = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("요청자 유저를 찾을 수 없습니다."));
         ShiftSwapRequest request = requestRepo.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("대타 요청을 찾을 수 없습니다."));
 
@@ -139,6 +145,7 @@ public class ShiftSwapService {
                             .type(Notification.Type.SHIFT_SWAP_MANAGER_APPROVED_REQUESTER)
                             .message("사장님이 대타 요청을 최종 승인했습니다.")
                             .isRead(false)
+                                    .requester(requester)
                             .build());
                 } else {
                     request.setStatus(ShiftSwapRequest.Status.ACCEPTED);
@@ -172,6 +179,7 @@ public class ShiftSwapService {
     // 3. 사장 최종 승인/거절
     @Transactional
     public ShiftSwapResponseDto managerApproval(Long userId, Long requestId, ShiftSwapManagerApprovalDto dto) {
+        AppUser requester = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("요청자 유저를 찾을 수 없습니다."));
         ShiftSwapRequest request = requestRepo.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("대타 요청을 찾을 수 없습니다."));
 
@@ -205,6 +213,7 @@ public class ShiftSwapService {
                                 .shiftSwapRequestId(request.getId())
                                 .type(Notification.Type.SHIFT_SWAP_MANAGER_APPROVED_REQUESTER)
                                 .message("대타 요청이 사장님으로부터 최종 승인되었습니다.")
+                                .requester(requester)
                                 .isRead(false)
                                 .build(),
                         Notification.builder()
@@ -217,6 +226,7 @@ public class ShiftSwapService {
                                 .type(Notification.Type.SHIFT_SWAP_MANAGER_APPROVED_RECEIVER)
                                 .message("당신이 수락한 대타 요청이 사장님으로부터 최종 승인되었습니다.")
                                 .isRead(false)
+                                .requester(requester)
                                 .build()
                 ));
             }
@@ -233,6 +243,7 @@ public class ShiftSwapService {
                                 .type(Notification.Type.SHIFT_SWAP_MANAGER_REJECTED_REQUESTER)
                                 .message("대타 요청이 사장님으로부터 최종 거절되었습니다.")
                                 .isRead(false)
+                                .requester(requester)
                                 .build(),
                         Notification.builder()
                                 .userId(request.getReceiver().getUser().getId())
@@ -244,6 +255,7 @@ public class ShiftSwapService {
                                 .type(Notification.Type.SHIFT_SWAP_MANAGER_REJECTED_RECEIVER)
                                 .message("당신이 수락한 대타 요청이 사장님으로부터 거절되었습니다.")
                                 .isRead(false)
+                                .requester(requester)
                                 .build()
                 ));
             }
