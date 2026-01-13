@@ -65,7 +65,7 @@ public class OnboardingService {
 
         // 활성 매장 설정
         user.setActiveStoreId(store.getId());
-//        users.save(user);
+        users.save(user);
 
         // 계좌 저장 (선택)
         Bank bank = null;

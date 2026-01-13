@@ -48,11 +48,4 @@ public class ShiftSwapController {
         return ResponseEntity.ok(service.managerApproval(userId, requestId, dto));
     }
 
-    // 4. 알림 조회
-    @GetMapping("/notifications")
-    public ResponseEntity<List<Notification>> getNotifications(
-            @AuthenticationPrincipal Long userId) {
-        return ResponseEntity.ok(service.getNotifications(userId));
-    }
-
 }

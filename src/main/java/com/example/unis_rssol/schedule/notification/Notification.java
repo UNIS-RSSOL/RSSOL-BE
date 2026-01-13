@@ -26,7 +26,7 @@ public class Notification {
     private Long userId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "store_id", nullable = false)
+    @JoinColumn(name = "store_id", nullable = true)
     private Store store;
 
     // 공통 타겟 (딥링크/라우팅용)

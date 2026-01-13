@@ -82,6 +82,7 @@ public class ExtrashiftService {
         for (Long receiverId : receiverUserIds) {
             notificationRepo.save(Notification.builder()
                     .userId(receiverId)
+                    .store(request.getStore())
                     .category(Notification.Category.EXTRA_SHIFT)
                     .targetType(Notification.TargetType.EXTRA_SHIFT_REQUEST)
                     .targetId(request.getId())
