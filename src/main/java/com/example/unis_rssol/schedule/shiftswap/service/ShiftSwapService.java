@@ -87,7 +87,7 @@ public class ShiftSwapService {
                             + start.toLocalDate() + " " + start.toLocalTime()
                             + " 근무 대타를 요청했습니다.")
                     .isRead(false)
-                    .requester(req1)
+                        .requester(req1)
                     .build());
 
             results.add(ShiftSwapResponseDto.from(request));
@@ -122,6 +122,7 @@ public class ShiftSwapService {
                         .type(Notification.Type.SHIFT_SWAP_MANAGER_REJECTED_REQUESTER)
                         .message("대타 요청이 거절되었습니다.")
                         .isRead(false)
+                                .requester(requester)
                         .build());
             }
             case "ACCEPT" -> {
@@ -167,6 +168,7 @@ public class ShiftSwapService {
                                     "님이 " + request.getRequester().getUser().getUsername() +
                                     "님의 대타 요청을 수락했습니다. 최종 승인하시겠어요?")
                             .isRead(false)
+                                .requester(requester)
                             .build()));
                 }
             }
@@ -213,7 +215,7 @@ public class ShiftSwapService {
                                 .shiftSwapRequestId(request.getId())
                                 .type(Notification.Type.SHIFT_SWAP_MANAGER_APPROVED_REQUESTER)
                                 .message("대타 요청이 사장님으로부터 최종 승인되었습니다.")
-                                .requester(requester)
+                                    .requester(requester)
                                 .isRead(false)
                                 .build(),
                         Notification.builder()
@@ -226,7 +228,7 @@ public class ShiftSwapService {
                                 .type(Notification.Type.SHIFT_SWAP_MANAGER_APPROVED_RECEIVER)
                                 .message("당신이 수락한 대타 요청이 사장님으로부터 최종 승인되었습니다.")
                                 .isRead(false)
-                                .requester(requester)
+                                    .requester(requester)
                                 .build()
                 ));
             }
@@ -243,7 +245,7 @@ public class ShiftSwapService {
                                 .type(Notification.Type.SHIFT_SWAP_MANAGER_REJECTED_REQUESTER)
                                 .message("대타 요청이 사장님으로부터 최종 거절되었습니다.")
                                 .isRead(false)
-                                .requester(requester)
+                                    .requester(requester)
                                 .build(),
                         Notification.builder()
                                 .userId(request.getReceiver().getUser().getId())
@@ -255,7 +257,7 @@ public class ShiftSwapService {
                                 .type(Notification.Type.SHIFT_SWAP_MANAGER_REJECTED_RECEIVER)
                                 .message("당신이 수락한 대타 요청이 사장님으로부터 거절되었습니다.")
                                 .isRead(false)
-                                .requester(requester)
+                                    .requester(requester)
                                 .build()
                 ));
             }

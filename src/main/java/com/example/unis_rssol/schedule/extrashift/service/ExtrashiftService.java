@@ -135,7 +135,7 @@ public class ExtrashiftService {
                 .extraShiftRequestId(request.getId())
                 .type(Notification.Type.EXTRA_SHIFT_NOTIFY_MANAGER)
                 .message(notifyMgrMsg)
-                        .requester(requester)
+                .requester(requester)
                 .build());
 
         return ExtrashiftResponseDetailDto.of(request, response);
@@ -203,7 +203,7 @@ public class ExtrashiftService {
                         ? Notification.Type.EXTRA_SHIFT_MANAGER_APPROVED_WORKER
                         : Notification.Type.EXTRA_SHIFT_MANAGER_REJECTED_WORKER)
                 .message(workerMsg)
-                        .requester(requester)
+                .requester(requester)
                 .build());
 
         return ExtrashiftManagerApprovalDetailDto.of(request, response, shiftAssigned);
