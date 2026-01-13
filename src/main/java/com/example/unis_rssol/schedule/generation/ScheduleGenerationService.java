@@ -86,9 +86,6 @@ public class ScheduleGenerationService {
         ScheduleSettings settings = createOrUpdateSetting(store, request);
         createSegmentsFromRequest(settings, request.getTimeSegments());
 
-        // 2. 상태 저장(Requested!) :요청중입니다.
-        settings.setStatus(ScheduleSettings.ScheduleStatus.REQUESTED);
-
         // 3. 알림 생성
         notificationService.sendScheduleInputRequest(storeId, request.getStartDate(),request.getEndDate());
 
@@ -204,6 +201,7 @@ public class ScheduleGenerationService {
             scheduleSettings.getSegments().clear(); // segments 새로 설정
         } else {
             scheduleSettings = new ScheduleSettings(store, request.getOpenTime(), request.getCloseTime());
+            scheduleSettings.setStatus(ScheduleSettings.ScheduleStatus.REQUESTED);
         }
 
         return scheduleSettingsRepository.save(scheduleSettings);         // 저장까지 수행
