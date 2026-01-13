@@ -1,10 +1,13 @@
-package com.example.unis_rssol.schedule.repository;
+package com.example.unis_rssol.schedule.workshifts;
 
 import com.example.unis_rssol.schedule.generation.entity.WorkShift;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -38,4 +41,15 @@ public interface WorkShiftRepository extends JpaRepository<WorkShift, Long> {
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );
+
+
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM WorkShift ws " +
+            "WHERE ws.store.id = :storeId " +
+            "AND ws.startDatetime <= :newEndDate " +
+            "AND ws.endDatetime >= :newStartDate")
+    void deleteOverlappingShifts(@Param("storeId") Long storeId,
+                                 @Param("newStartDate") LocalDate newStartDate,
+                                 @Param("newEndDate") LocalDate newEndDate);
 }
