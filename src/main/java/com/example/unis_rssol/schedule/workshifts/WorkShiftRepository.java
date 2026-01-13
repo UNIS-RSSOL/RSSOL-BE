@@ -43,13 +43,14 @@ public interface WorkShiftRepository extends JpaRepository<WorkShift, Long> {
     );
 
 
-    @Transactional
     @Modifying
     @Query("DELETE FROM WorkShift ws " +
             "WHERE ws.store.id = :storeId " +
-            "AND ws.startDatetime <= :newEndDate " +
-            "AND ws.endDatetime >= :newStartDate")
-    void deleteOverlappingShifts(@Param("storeId") Long storeId,
-                                 @Param("newStartDate") LocalDate newStartDate,
-                                 @Param("newEndDate") LocalDate newEndDate);
+            "AND ws.startDatetime <= :end " +
+            "AND ws.endDatetime >= :start")
+    void deleteOverlappingShifts(
+            @Param("storeId") Long storeId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
 }

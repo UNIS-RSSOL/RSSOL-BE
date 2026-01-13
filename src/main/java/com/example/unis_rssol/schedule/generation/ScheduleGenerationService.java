@@ -32,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -135,8 +136,11 @@ public class ScheduleGenerationService {
     public Schedule finalizeCandidateSchedule(Long storeId, String candidateKey,
                                               LocalDate startDate, LocalDate endDate) {
 
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime end = endDate.atTime(LocalTime.MAX);
+
         // 0️⃣ 기존 근무블록 삭제
-        workShiftRepository.deleteOverlappingShifts(storeId, startDate, endDate);
+        workShiftRepository.deleteOverlappingShifts(storeId, start, end);
 
 
         // 1️⃣ Schedule 엔티티 생성
