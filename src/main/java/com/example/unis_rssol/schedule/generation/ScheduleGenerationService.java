@@ -165,6 +165,7 @@ public class ScheduleGenerationService {
             if (shift.getUserStoreId() == null) continue; // UNASSIGNED
 
             WorkShift ws = new WorkShift();
+            ws.setShiftStatus(WorkShift.ShiftStatus.SCHEDULED);
             ws.setUserStore(userStoreRepository.findById(shift.getUserStoreId())
                     .orElseThrow(() -> new NotFoundException("직원 정보를 찾을 수 없습니다.")));
             ws.setStore(store);
