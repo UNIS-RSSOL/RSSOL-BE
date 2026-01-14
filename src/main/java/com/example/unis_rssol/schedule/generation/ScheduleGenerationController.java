@@ -47,7 +47,8 @@ public class ScheduleGenerationController {
     @PostMapping("/confirm")
     public ResponseEntity<?> confirmSchedule(@AuthenticationPrincipal Long userId, @RequestBody ConfirmScheduleRequestDto request) {
         // Redis에서 후보 불러오고 startDate/endDate는 CandidateSchedule 생성 시 기록되어 있어야 함
-        Schedule finalized = service.finalizeCandidateSchedule(userId, request.getCandidateKey(), request.getStartDate(), request.getEndDate());
+        Long storeId = extractStoreIdFromCandidateKey(request.getCandidateKey());
+        Schedule finalized = service.finalizeCandidateSchedule(storeId, request.getCandidateKey(), request.getStartDate(), request.getEndDate());
         if (finalized == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("status", "error", "message", "Failed to confirm schedule"));
         }
@@ -61,4 +62,18 @@ public class ScheduleGenerationController {
         service.testRedis(dummy);
         return "Redis 테스트 완료";
     }
+
+    private Long extractStoreIdFromCandidateKey(String candidateKey) {
+        try {
+            String[] parts = candidateKey.split(":");
+            // candidate_schedule : store : {storeId} : week : ...
+            if (parts.length < 4 || !"store".equals(parts[1])) {
+                throw new IllegalArgumentException("Invalid candidateKey format");
+            }
+            return Long.parseLong(parts[2]);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("candidateKey에서 storeId 추출 실패");
+        }
+    }
+
 }
