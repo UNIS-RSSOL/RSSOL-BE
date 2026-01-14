@@ -181,6 +181,7 @@ public class ExtrashiftService {
 
             WorkShift newShift = new WorkShift();
             newShift.setUserStore(response.getCandidate());
+            newShift.setStore(request.getStore());
             newShift.setSchedule(schedule);
             newShift.setStartDatetime(request.getStartDatetime());
             newShift.setEndDatetime(request.getEndDatetime());
