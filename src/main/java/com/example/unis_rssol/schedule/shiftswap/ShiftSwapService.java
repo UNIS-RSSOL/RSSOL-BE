@@ -1,4 +1,4 @@
-package com.example.unis_rssol.schedule.shiftswap.service;
+package com.example.unis_rssol.schedule.shiftswap;
 
 import com.example.unis_rssol.domain.user.entity.AppUser;
 import com.example.unis_rssol.domain.user.repository.AppUserRepository;
@@ -9,9 +9,7 @@ import com.example.unis_rssol.schedule.shiftswap.dto.ShiftSwapRequestCreateDto;
 import com.example.unis_rssol.schedule.shiftswap.dto.ShiftSwapRespondDto;
 import com.example.unis_rssol.schedule.shiftswap.dto.ShiftSwapResponseDto;
 import com.example.unis_rssol.schedule.notification.Notification;
-import com.example.unis_rssol.schedule.shiftswap.entity.ShiftSwapRequest;
 import com.example.unis_rssol.schedule.notification.NotificationRepository;
-import com.example.unis_rssol.schedule.shiftswap.repository.ShiftSwapRequestRepository;
 import com.example.unis_rssol.domain.store.entity.UserStore;
 import com.example.unis_rssol.domain.store.repository.UserStoreRepository;
 import lombok.RequiredArgsConstructor;

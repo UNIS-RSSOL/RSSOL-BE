@@ -1,6 +1,5 @@
-package com.example.unis_rssol.schedule.shiftswap.repository;
+package com.example.unis_rssol.schedule.shiftswap;
 
-import com.example.unis_rssol.schedule.shiftswap.entity.ShiftSwapRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Collection;

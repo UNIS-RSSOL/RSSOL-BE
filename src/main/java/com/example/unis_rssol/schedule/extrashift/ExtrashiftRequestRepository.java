@@ -1,4 +1,4 @@
-package com.example.unis_rssol.schedule.extrashift.repository;
+package com.example.unis_rssol.schedule.extrashift;
 
 import com.example.unis_rssol.schedule.extrashift.entity.ExtrashiftRequest;
 import org.springframework.data.jpa.repository.JpaRepository;

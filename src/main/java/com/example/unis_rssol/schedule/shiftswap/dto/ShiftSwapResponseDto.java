@@ -1,6 +1,6 @@
 package com.example.unis_rssol.schedule.shiftswap.dto;
 
-import com.example.unis_rssol.schedule.shiftswap.entity.ShiftSwapRequest;
+import com.example.unis_rssol.schedule.shiftswap.ShiftSwapRequest;
 import lombok.Builder;
 import lombok.Getter;
 

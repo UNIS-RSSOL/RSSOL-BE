@@ -1,7 +1,7 @@
 package com.example.unis_rssol.schedule.notification.dto;
 
 import com.example.unis_rssol.schedule.extrashift.entity.ExtrashiftRequest;
-import com.example.unis_rssol.schedule.shiftswap.entity.ShiftSwapRequest;
+import com.example.unis_rssol.schedule.shiftswap.ShiftSwapRequest;
 import com.example.unis_rssol.schedule.notification.Notification;
 import lombok.*;
 

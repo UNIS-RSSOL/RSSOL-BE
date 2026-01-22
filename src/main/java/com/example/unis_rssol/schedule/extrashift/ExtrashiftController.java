@@ -1,7 +1,6 @@
-package com.example.unis_rssol.schedule.extrashift.controller;
+package com.example.unis_rssol.schedule.extrashift;
 
 import com.example.unis_rssol.schedule.extrashift.dto.*;
-import com.example.unis_rssol.schedule.extrashift.service.ExtrashiftService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

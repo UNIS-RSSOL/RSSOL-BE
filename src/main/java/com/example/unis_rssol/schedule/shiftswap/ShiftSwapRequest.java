@@ -1,4 +1,4 @@
-package com.example.unis_rssol.schedule.shiftswap.entity;
+package com.example.unis_rssol.schedule.shiftswap;
 
 import com.example.unis_rssol.schedule.generation.entity.WorkShift;
 import com.example.unis_rssol.domain.store.entity.UserStore;

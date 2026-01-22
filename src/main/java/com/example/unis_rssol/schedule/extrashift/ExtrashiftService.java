@@ -1,4 +1,4 @@
-package com.example.unis_rssol.schedule.extrashift.service;
+package com.example.unis_rssol.schedule.extrashift;
 
 import com.example.unis_rssol.domain.user.entity.AppUser;
 import com.example.unis_rssol.domain.user.repository.AppUserRepository;
@@ -11,8 +11,6 @@ import com.example.unis_rssol.schedule.notification.NotificationRepository;
 import com.example.unis_rssol.schedule.extrashift.dto.*;
 import com.example.unis_rssol.schedule.extrashift.entity.ExtrashiftRequest;
 import com.example.unis_rssol.schedule.extrashift.entity.ExtrashiftResponse;
-import com.example.unis_rssol.schedule.extrashift.repository.ExtrashiftRequestRepository;
-import com.example.unis_rssol.schedule.extrashift.repository.ExtrashiftResponseRepository;
 import com.example.unis_rssol.domain.store.entity.UserStore;
 import com.example.unis_rssol.domain.store.entity.UserStore.Position;
 import com.example.unis_rssol.domain.store.repository.UserStoreRepository;

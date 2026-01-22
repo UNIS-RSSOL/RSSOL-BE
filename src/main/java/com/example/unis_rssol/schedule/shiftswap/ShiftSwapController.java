@@ -1,11 +1,9 @@
-package com.example.unis_rssol.schedule.shiftswap.controller;
+package com.example.unis_rssol.schedule.shiftswap;
 
 import com.example.unis_rssol.schedule.shiftswap.dto.ShiftSwapManagerApprovalDto;
 import com.example.unis_rssol.schedule.shiftswap.dto.ShiftSwapRequestCreateDto;
 import com.example.unis_rssol.schedule.shiftswap.dto.ShiftSwapRespondDto;
 import com.example.unis_rssol.schedule.shiftswap.dto.ShiftSwapResponseDto;
-import com.example.unis_rssol.schedule.notification.Notification;
-import com.example.unis_rssol.schedule.shiftswap.service.ShiftSwapService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
