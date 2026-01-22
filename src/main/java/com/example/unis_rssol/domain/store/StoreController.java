@@ -1,8 +1,6 @@
 package com.example.unis_rssol.domain.store;
 
-import com.example.unis_rssol.global.auth.AuthorizationService;
-import com.example.unis_rssol.domain.store.entity.UserStore;
-import com.example.unis_rssol.domain.store.repository.UserStoreRepository;
+import com.example.unis_rssol.global.security.AuthorizationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
