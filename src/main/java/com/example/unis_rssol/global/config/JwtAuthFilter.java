@@ -1,6 +1,6 @@
 package com.example.unis_rssol.global.config;
 
-import com.example.unis_rssol.domain.store.repository.UserStoreRepository;
+import com.example.unis_rssol.domain.store.UserStoreRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

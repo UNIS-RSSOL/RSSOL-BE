@@ -1,0 +1,15 @@
+package com.example.unis_rssol.domain.schedule.extrashift;
+
+import com.example.unis_rssol.domain.schedule.extrashift.entity.ExtrashiftResponse;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface ExtrashiftResponseRepository extends JpaRepository<ExtrashiftResponse, Long> {
+
+    // 중복 응답 방지용
+    boolean existsByExtraShiftRequest_IdAndCandidate_Id(Long extraShiftRequestId, Long candidateUserStoreId);
+
+    // 매니저 승인 대기중(또는 전체) 응답들 조회용(필요시)
+    List<ExtrashiftResponse> findByExtraShiftRequest_Id(Long extraShiftRequestId);
+}

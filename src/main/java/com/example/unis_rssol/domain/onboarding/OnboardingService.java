@@ -2,18 +2,18 @@ package com.example.unis_rssol.domain.onboarding;
 
 import com.example.unis_rssol.domain.onboarding.dto.OnboardingRequest;
 import com.example.unis_rssol.domain.onboarding.dto.OnboardingResponse;
-import com.example.unis_rssol.domain.bank.entity.Bank;
-import com.example.unis_rssol.domain.bank.entity.BankAccount;
-import com.example.unis_rssol.domain.bank.repository.BankAccountRepository;
-import com.example.unis_rssol.domain.bank.repository.BankRepository;
-import com.example.unis_rssol.domain.store.entity.Store;
-import com.example.unis_rssol.domain.store.entity.UserStore;
-import com.example.unis_rssol.domain.store.repository.StoreRepository;
-import com.example.unis_rssol.domain.store.repository.UserStoreRepository;
-import com.example.unis_rssol.domain.user.entity.AppUser;
-import com.example.unis_rssol.domain.user.repository.AppUserRepository;
+import com.example.unis_rssol.domain.bank.Bank;
+import com.example.unis_rssol.domain.bank.BankAccount;
+import com.example.unis_rssol.domain.bank.BankAccountRepository;
+import com.example.unis_rssol.domain.bank.BankRepository;
+import com.example.unis_rssol.domain.store.Store;
+import com.example.unis_rssol.domain.store.UserStore;
+import com.example.unis_rssol.domain.store.StoreRepository;
+import com.example.unis_rssol.domain.store.UserStoreRepository;
+import com.example.unis_rssol.domain.user.User;
+import com.example.unis_rssol.domain.user.UserRepository;
 import com.example.unis_rssol.global.fordevToken.StoreCodeGenerator;
-import com.example.unis_rssol.domain.user.service.UserProfileService;
+import com.example.unis_rssol.domain.user.UserProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OnboardingService {
 
-    private final AppUserRepository users;
+    private final UserRepository users;
     private final StoreRepository stores;
     private final UserStoreRepository userStores;
     private final BankRepository banks;
@@ -32,7 +32,7 @@ public class OnboardingService {
     @Transactional
     public OnboardingResponse onboard(Long userId, OnboardingRequest req) {
 
-        AppUser user = users.findById(userId).orElseThrow();
+        User user = users.findById(userId).orElseThrow();
 
         Store store;
         if ("OWNER".equalsIgnoreCase(req.getRole())) {

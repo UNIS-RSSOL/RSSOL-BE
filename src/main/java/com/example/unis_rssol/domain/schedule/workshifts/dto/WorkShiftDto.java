@@ -1,0 +1,30 @@
+package com.example.unis_rssol.domain.schedule.workshifts.dto;
+
+import com.example.unis_rssol.domain.schedule.generation.entity.WorkShift;
+import lombok.Getter;
+
+import java.time.LocalDateTime;
+
+@Getter
+public class WorkShiftDto {
+    private Long id;
+    private Long userStoreId;    // userStore 객체 대신 ID만 담음
+    private Long userId;
+    private String username;
+    private LocalDateTime startDatetime;
+    private LocalDateTime endDatetime;
+    private String shiftStatus;
+
+
+    public WorkShiftDto(WorkShift ws) {
+        this.id = ws.getId();
+        this.startDatetime = ws.getStartDatetime();
+        this.endDatetime = ws.getEndDatetime();
+        this.shiftStatus = ws.getShiftStatus().name();
+        this.userStoreId = ws.getUserStore() != null ? ws.getUserStore().getId() : null;
+        if (ws.getUserStore().getUser() != null) {
+            this.userId = ws.getUserStore().getUser().getId();
+            this.username = ws.getUserStore().getUser().getUsername();
+        }
+    }
+}
