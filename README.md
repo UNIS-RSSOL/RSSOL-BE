@@ -48,4 +48,4 @@
 - 관리자 대시보드  
 
 ### 🔗 **API 명세서**  
-[Swagger UI](https://connecti.store/swagger-ui/index.html#/mypage-controller/leaveStaffStore)
+[Swagger UI](https://connecti.store/swagger-ui/index.html#)
