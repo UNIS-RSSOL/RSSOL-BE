@@ -1,3 +1,6 @@
 /gradlew text eol=lf
 *.bat text eol=crlf
 *.jar binary
+application.yml merge=ours
+Dockerfile merge=ours
+docker-compose.yml merge=ours
