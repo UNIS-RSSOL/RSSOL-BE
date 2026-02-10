@@ -1,5 +1,6 @@
 package com.example.unis_rssol.global.config;
 
+import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -12,9 +13,9 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfig {
 
     @Bean
-    public RedisConnectionFactory redisConnectionFactory() {
-        return new LettuceConnectionFactory("redis", 6379);
-    } //로컬에서는 localhost로 사용해야합니다.
+    public RedisConnectionFactory redisConnectionFactory(RedisProperties redisProperties) {
+        return new LettuceConnectionFactory(redisProperties.getHost(), redisProperties.getPort());
+    } //로컬에서는 localhost로 사용해야함.
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
