@@ -13,35 +13,39 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class AttendanceService {
 
     private final AttendanceRepository attendanceRepository;
     private final WorkShiftRepository workShiftRepository;
 
-    /** 오늘 근무 상태 조회 **/
+    /** 오늘 근무 상태 조회 (읽기 전용) **/
     @Transactional(readOnly = true)
     public AttendanceTodayResponse getTodayAttendance(Long userStoreId) {
         LocalDate today = LocalDate.now();
 
         return attendanceRepository
                 .findByUserStoreIdAndWorkDate(userStoreId, today)
-                .map(attendance -> mapToTodayResponse(attendance))
-                .orElseGet(() -> createTodayAttendanceIfNeeded(userStoreId, today));
+                .map(this::mapToTodayResponse)
+                .orElseGet(() -> createTodayAttendanceIfNeededTransactional(userStoreId, today));
+    }
+
+    /** 실제 INSERT는 쓰기 트랜잭션에서 수행 **/
+    @Transactional
+    public AttendanceTodayResponse createTodayAttendanceIfNeededTransactional(Long userStoreId, LocalDate today) {
+        return createTodayAttendanceIfNeeded(userStoreId, today);
     }
 
     /** 출근 처리 **/
+    @Transactional
     public AttendanceCheckInResponse checkIn(Long userStoreId) {
         Attendance attendance = getTodayAttendanceEntity(userStoreId);
 
         if (attendance.getStatus() == AttendanceStatus.NO_SCHEDULE) {
             throw new IllegalStateException("NO_SCHEDULE");
         }
-
         if (attendance.isCheckedIn()) {
             throw new IllegalStateException("ALREADY_CHECKED_IN");
         }
-
         if (attendance.getStatus() == AttendanceStatus.FINISHED) {
             throw new IllegalStateException("ALREADY_FINISHED");
         }
@@ -61,17 +65,16 @@ public class AttendanceService {
     }
 
     /** 퇴근 처리 **/
+    @Transactional
     public AttendanceCheckOutResponse checkOut(Long userStoreId) {
         Attendance attendance = getTodayAttendanceEntity(userStoreId);
 
         if (attendance.getStatus() == AttendanceStatus.NO_SCHEDULE) {
             throw new IllegalStateException("NO_SCHEDULE");
         }
-
         if (!attendance.isCheckedIn()) {
             throw new IllegalStateException("NOT_CHECKED_IN");
         }
-
         if (attendance.isCheckedOut()) {
             throw new IllegalStateException("ALREADY_CHECKED_OUT");
         }
@@ -91,10 +94,7 @@ public class AttendanceService {
     }
 
     /** 하루 1건 Attendance 생성 및 TodayResponse 반환 **/
-    private AttendanceTodayResponse createTodayAttendanceIfNeeded(
-            Long userStoreId,
-            LocalDate today
-    ) {
+    private AttendanceTodayResponse createTodayAttendanceIfNeeded(Long userStoreId, LocalDate today) {
         WorkShift todayShift = findTodayWorkShift(userStoreId, today);
 
         Attendance attendance;
@@ -122,7 +122,6 @@ public class AttendanceService {
         return mapToTodayResponse(attendance);
     }
 
-    /** attendance → AttendanceTodayResponse 변환 (근무 시간 포함) **/
     private AttendanceTodayResponse mapToTodayResponse(Attendance attendance) {
         WorkShift shift = getWorkShiftIfExists(attendance.getWorkShiftId());
         LocalDateTime workStart = shift != null ? shift.getStartDatetime() : null;
@@ -141,6 +140,7 @@ public class AttendanceService {
     }
 
     /** 오늘 attendance 조회 **/
+    @Transactional(readOnly = true)
     private Attendance getTodayAttendanceEntity(Long userStoreId) {
         LocalDate today = LocalDate.now();
 
@@ -150,20 +150,18 @@ public class AttendanceService {
     }
 
     /** WorkShift 조회 **/
+    @Transactional(readOnly = true)
     private WorkShift findTodayWorkShift(Long userStoreId, LocalDate today) {
         LocalDateTime start = today.atStartOfDay();
         LocalDateTime end = today.atTime(23, 59, 59);
 
-        List<WorkShift> shifts = workShiftRepository.findMyShifts(
-                userStoreId,
-                start,
-                end
-        );
+        List<WorkShift> shifts = workShiftRepository.findMyShifts(userStoreId, start, end);
 
         return shifts.isEmpty() ? null : shifts.get(0);
     }
 
-    /** WorkShift Id가 있으면 조회, 없으면 null **/
+    /** WorkShift Id가 있으면 조회 **/
+    @Transactional(readOnly = true)
     private WorkShift getWorkShiftIfExists(Long workShiftId) {
         if (workShiftId == null) return null;
         return workShiftRepository.findById(workShiftId).orElse(null);
