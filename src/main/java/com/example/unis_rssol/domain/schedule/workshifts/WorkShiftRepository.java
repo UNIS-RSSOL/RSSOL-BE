@@ -40,6 +40,16 @@ public interface WorkShiftRepository extends JpaRepository<WorkShift, Long> {
             @Param("end") LocalDateTime end
     );
 
+    @Query("SELECT w FROM WorkShift w " +
+            "WHERE w.userStore.user.id = :userId " +
+            "AND w.startDatetime < :end " +
+            "AND w.endDatetime > :start " +
+            "ORDER BY w.startDatetime ASC")
+    List<WorkShift> findShiftsOverlappingToday(
+            @Param("userId") Long userId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
 
     @Modifying
     @Query("DELETE FROM WorkShift ws " +

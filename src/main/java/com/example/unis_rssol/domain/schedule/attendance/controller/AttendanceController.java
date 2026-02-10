@@ -3,6 +3,7 @@ package com.example.unis_rssol.domain.schedule.attendance.controller;
 import com.example.unis_rssol.domain.schedule.attendance.AttendanceService;
 import com.example.unis_rssol.domain.schedule.attendance.dto.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,23 +14,17 @@ public class AttendanceController {
     private final AttendanceService attendanceService;
 
     @GetMapping("/today")
-    public AttendanceTodayResponse getToday(
-            @RequestAttribute("userStoreId") Long userStoreId
-    ) {
+    public AttendanceTodayResponse getToday(@AuthenticationPrincipal Long userStoreId) {
         return attendanceService.getTodayAttendance(userStoreId);
     }
 
     @PostMapping("/check-in")
-    public AttendanceCheckInResponse checkIn(
-            @RequestAttribute("userStoreId") Long userStoreId
-    ) {
+    public AttendanceCheckInResponse checkIn(@AuthenticationPrincipal Long userStoreId) {
         return attendanceService.checkIn(userStoreId);
     }
 
     @PostMapping("/check-out")
-    public AttendanceCheckOutResponse checkOut(
-            @RequestAttribute("userStoreId") Long userStoreId
-    ) {
+    public AttendanceCheckOutResponse checkOut(@AuthenticationPrincipal Long userStoreId) {
         return attendanceService.checkOut(userStoreId);
     }
 }

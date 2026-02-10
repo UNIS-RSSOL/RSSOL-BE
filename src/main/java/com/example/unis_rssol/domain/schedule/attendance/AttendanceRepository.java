@@ -11,4 +11,5 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
             Long userStoreId,
             LocalDate workDate
     );
+
 }

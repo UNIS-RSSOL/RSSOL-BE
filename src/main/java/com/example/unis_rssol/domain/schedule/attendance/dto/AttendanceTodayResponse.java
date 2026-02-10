@@ -13,9 +13,10 @@ public record AttendanceTodayResponse(
         boolean isCheckedOut,
         LocalDateTime checkInTime,
         LocalDateTime checkOutTime,
-        Long workShiftId
+        LocalDateTime workStartTime,   // 추가
+        LocalDateTime workEndTime      // 추가
 ) {
-    public static AttendanceTodayResponse from(Attendance attendance) {
+    public static AttendanceTodayResponse from(Attendance attendance, LocalDateTime start, LocalDateTime end) {
         return new AttendanceTodayResponse(
                 attendance.getWorkDate(),
                 attendance.getStatus(),
@@ -23,7 +24,8 @@ public record AttendanceTodayResponse(
                 attendance.isCheckedOut(),
                 attendance.getCheckInTime(),
                 attendance.getCheckOutTime(),
-                attendance.getWorkShiftId()
+                start,
+                end
         );
     }
 }

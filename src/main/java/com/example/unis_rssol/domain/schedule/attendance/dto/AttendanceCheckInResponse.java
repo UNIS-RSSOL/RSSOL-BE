@@ -10,5 +10,6 @@ public record AttendanceCheckInResponse(
         LocalDate workDate,
         AttendanceStatus status,
         LocalDateTime checkInTime,
-        Long workShiftId
+        LocalDateTime workStartTime,
+        LocalDateTime workEndTime
 ) {}
