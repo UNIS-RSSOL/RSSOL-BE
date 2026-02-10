@@ -1,0 +1,35 @@
+package com.example.unis_rssol.domain.schedule.attendance.controller;
+
+import com.example.unis_rssol.domain.schedule.attendance.AttendanceService;
+import com.example.unis_rssol.domain.schedule.attendance.dto.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/attendance")
+@RequiredArgsConstructor
+public class AttendanceController {
+
+    private final AttendanceService attendanceService;
+
+    @GetMapping("/today")
+    public AttendanceTodayResponse getToday(
+            @RequestAttribute("userStoreId") Long userStoreId
+    ) {
+        return attendanceService.getTodayAttendance(userStoreId);
+    }
+
+    @PostMapping("/check-in")
+    public AttendanceCheckInResponse checkIn(
+            @RequestAttribute("userStoreId") Long userStoreId
+    ) {
+        return attendanceService.checkIn(userStoreId);
+    }
+
+    @PostMapping("/check-out")
+    public AttendanceCheckOutResponse checkOut(
+            @RequestAttribute("userStoreId") Long userStoreId
+    ) {
+        return attendanceService.checkOut(userStoreId);
+    }
+}
