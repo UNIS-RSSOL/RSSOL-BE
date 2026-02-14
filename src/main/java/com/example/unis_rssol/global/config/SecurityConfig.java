@@ -83,7 +83,8 @@ public class SecurityConfig {
                 "https://connecti.store",
                 "http://localhost:3000",
                 "http://localhost:5173",
-                "https://rssol.vercel.app"
+                "https://rssol.vercel.app",
+                "https://rssol.up.railway.app" // 릴리즈용
         ));
 
         // 허용 메서드
