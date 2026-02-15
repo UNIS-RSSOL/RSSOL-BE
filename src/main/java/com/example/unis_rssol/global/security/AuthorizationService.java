@@ -40,4 +40,8 @@ public class AuthorizationService {
         return userStoreRepository.findByUser_IdAndStore_Id(userId, storeId)
                 .orElseThrow(() -> new ForbiddenException("해당 매장에 근무할 권한이 없습니다."));
     }
+
+    public User getUserOrThrow(Long userId){
+        return appUserRepository.findById(userId).orElseThrow(() -> new ForbiddenException("해당 유저를 찾을 수 없습니다."));
+    }
 }

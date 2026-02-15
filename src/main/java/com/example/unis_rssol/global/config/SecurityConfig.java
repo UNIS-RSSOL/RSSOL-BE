@@ -59,6 +59,7 @@ public class SecurityConfig {
 
                     // OWNER 전용 API
                     auth.requestMatchers("/api/auth/onboarding/owner/**").hasRole("OWNER");
+                    auth.requestMatchers("/api/administration-staff/**").hasRole("OWNER");
 
                     // STAFF 전용 API
                     auth.requestMatchers("/api/auth/onboarding/staff/**").hasRole("STAFF");
@@ -80,11 +81,9 @@ public class SecurityConfig {
 
         // 허용할 프론트 개발 도메인
         cfg.setAllowedOrigins(List.of(
-                "https://connecti.store",
+                "https://rssolplan.com",
                 "http://localhost:3000",
-                "http://localhost:5173",
-                "https://rssol.vercel.app",
-                "https://rssol.up.railway.app" // 릴리즈용
+                "http://localhost:5173"
         ));
 
         // 허용 메서드
