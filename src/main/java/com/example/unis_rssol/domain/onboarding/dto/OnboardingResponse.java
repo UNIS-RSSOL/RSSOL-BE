@@ -1,5 +1,6 @@
 package com.example.unis_rssol.domain.onboarding.dto;
 
+import com.example.unis_rssol.domain.store.setting.StoreSettingDto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -22,4 +23,6 @@ public class OnboardingResponse {
     private String bankName;
     private String accountNumber;
     private LocalDate hireDate;
+
+    private StoreSettingDto storeSetting;
 }
