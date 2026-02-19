@@ -36,6 +36,7 @@ public class TodoService {
     public TodoListResponseDto getTodosByDate(Long userId, LocalDate date) {
         Long storeId = authorizationService.getActiveStoreIdOrThrow(userId);
 
+
         List<Todo> allTodos = todoRepository.findAllTodosForDate(storeId, userId, date);
 
         List<TodoResponseDto> storeTodos = allTodos.stream()
@@ -49,7 +50,8 @@ public class TodoService {
                 .collect(Collectors.toList());
 
         List<TodoResponseDto> personalTodos = allTodos.stream()
-                .filter(t -> t.getTodoType() == Todo.TodoType.PERSONAL)
+                .filter(t -> t.getTodoType() == Todo.TodoType.PERSONAL
+                        && t.getUser().getId().equals(userId))  // 본인 것만 조회
                 .map(TodoResponseDto::from)
                 .collect(Collectors.toList());
 
