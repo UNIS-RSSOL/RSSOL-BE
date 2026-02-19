@@ -37,8 +37,6 @@ public class StoreSetting {
     @Column(nullable = false)
     private boolean useSegments;
 
-    // 세그먼트 미사용 시 필요 동시 근무자 수
-    private Integer requiredStaff;
 
     // 브레이크타임
     @Column(nullable = false)

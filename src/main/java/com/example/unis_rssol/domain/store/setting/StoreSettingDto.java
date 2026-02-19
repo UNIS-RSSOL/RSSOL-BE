@@ -20,8 +20,6 @@ public class StoreSettingDto {
     // 세그먼트 사용 시
     private List<SegmentDto> segments;
 
-    // 세그먼트 미사용 시 (전체 시간대 필요 동시 근무자 수)
-    private Integer requiredStaff;
 
     // 브레이크타임
     private boolean hasBreakTime;

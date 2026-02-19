@@ -6,7 +6,6 @@ import java.util.Optional;
 
 public interface StoreSettingRepository extends JpaRepository<StoreSetting, Long> {
     Optional<StoreSetting> findByStoreId(Long storeId);
-
     boolean existsByStoreId(Long storeId);
 }
 
