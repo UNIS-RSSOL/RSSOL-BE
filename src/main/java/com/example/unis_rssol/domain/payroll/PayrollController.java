@@ -1,9 +1,9 @@
 package com.example.unis_rssol.domain.payroll;
 
-import com.example.unis_rssol.domain.payroll.dto.OwnerPayrollSummaryDto;
-import com.example.unis_rssol.domain.payroll.dto.StaffMyPayrollResponseDto;
-import com.example.unis_rssol.domain.payroll.dto.StaffPayrollResponseDto;
+import com.example.unis_rssol.domain.payroll.dto.*;
+import com.example.unis_rssol.global.security.annotation.AdminOnly;
 import com.example.unis_rssol.global.security.annotation.OwnerOnly;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +38,6 @@ public class PayrollController {
      * @param month  조회 월 (기본값: 현재 월)
      * @return 매장 급여 요약 (총합계 + 직원별 상세)
      */
-    @OwnerOnly
     @GetMapping("/store/summary")
     public ResponseEntity<OwnerPayrollSummaryDto> getStorePayrollSummary(
             @AuthenticationPrincipal Long userId,
@@ -107,6 +106,96 @@ public class PayrollController {
 
         List<StaffMyPayrollResponseDto> payrolls = payrollService.getMyPayrolls(userId, targetYear, targetMonth);
         return ResponseEntity.ok(payrolls);
+    }
+
+    // ==================== Admin: 최저임금 관리 API ====================
+
+    /**
+     * ADMIN: 최저임금 등록/수정
+     * - 특정 관리자(rssolewha@gmail.com)만 접근 가능
+     *
+     * @param userId 현재 로그인 사용자 ID
+     * @param dto    최저임금 정보
+     * @return 등록된 최저임금 정보
+     */
+    @AdminOnly
+    @PostMapping("/admin/minimum-wage")
+    public ResponseEntity<MinimumWage> createMinimumWage(
+            @AuthenticationPrincipal Long userId,
+            @Valid @RequestBody MinimumWageUpdateDto dto
+    ) {
+        log.info("⚙️ [Admin] userId={} 최저임금 등록 요청 - {}원 (적용: {} ~ {})",
+                userId, dto.getHourlyWage(), dto.getEffectiveFrom(), dto.getEffectiveTo());
+
+        MinimumWage created = payrollService.updateMinimumWage(dto);
+        return ResponseEntity.ok(created);
+    }
+
+    /**
+     * 최저임금 조회 (연도별)
+     *
+     * @param year 조회할 연도 (기본값: 현재 연도)
+     * @return 해당 연도의 최저임금 정보
+     */
+    @GetMapping("/minimum-wage")
+    public ResponseEntity<MinimumWage> getMinimumWage(
+            @RequestParam(required = false) Integer year
+    ) {
+        int targetYear = (year != null) ? year : LocalDate.now().getYear();
+        MinimumWage wage = payrollService.getMinimumWage(targetYear);
+        return ResponseEntity.ok(wage);
+    }
+
+    /**
+     * 현재 적용 중인 최저임금 조회
+     *
+     * @return 현재 적용 중인 최저임금 정보
+     */
+    @GetMapping("/minimum-wage/current")
+    public ResponseEntity<MinimumWage> getCurrentMinimumWage() {
+        MinimumWage wage = payrollService.getCurrentMinimumWage();
+        return ResponseEntity.ok(wage);
+    }
+
+    // ==================== Owner: 직원 시급 관리 API ====================
+
+    /**
+     * OWNER: 매장 직원 시급 설정
+     *
+     * @param userId      현재 로그인 사용자 ID (OWNER)
+     * @param userStoreId 시급을 설정할 직원의 UserStore ID
+     * @param dto         시급 정보
+     * @return 성공 응답
+     */
+    @OwnerOnly
+    @PutMapping("/store/staff/{userStoreId}/wage")
+    public ResponseEntity<Void> updateStaffWage(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long userStoreId,
+            @Valid @RequestBody StaffWageUpdateDto dto
+    ) {
+        log.info("💰 [시급설정] OWNER userId={} 직원 userStoreId={} 시급 설정 - {}원",
+                userId, userStoreId, dto.getHourlyWage());
+
+        payrollService.updateStaffWage(userId, userStoreId, dto.getHourlyWage());
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * OWNER: 매장 전체 직원 시급 목록 조회
+     *
+     * @param userId 현재 로그인 사용자 ID (OWNER)
+     * @return 매장 직원들의 시급 목록
+     */
+    @OwnerOnly
+    @GetMapping("/store/wages")
+    public ResponseEntity<StoreStaffWagesResponseDto> getAllStaffWages(
+            @AuthenticationPrincipal Long userId
+    ) {
+        log.info("📋 [시급조회] OWNER userId={} 매장 전체 직원 시급 조회", userId);
+
+        StoreStaffWagesResponseDto wages = payrollService.getAllStaffWages(userId);
+        return ResponseEntity.ok(wages);
     }
 }
 

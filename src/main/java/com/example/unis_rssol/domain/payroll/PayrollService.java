@@ -6,6 +6,7 @@ import com.example.unis_rssol.domain.payroll.util.TimeRangeUtil;
 import com.example.unis_rssol.domain.schedule.generation.entity.WorkShift;
 import com.example.unis_rssol.domain.schedule.workshifts.WorkShiftRepository;
 import com.example.unis_rssol.domain.store.Store;
+import com.example.unis_rssol.domain.store.StoreRepository;
 import com.example.unis_rssol.domain.store.UserStore;
 import com.example.unis_rssol.domain.store.UserStoreRepository;
 import com.example.unis_rssol.global.exception.ForbiddenException;
@@ -48,6 +49,8 @@ public class PayrollService {
     private final WorkShiftRepository workShiftRepository;
     private final UserStoreRepository userStoreRepository;
     private final AuthorizationService authorizationService;
+    private final MinimumWageRepository minimumWageRepository;
+    private final StoreRepository storeRepository;
 
     // 기본 시급 (추후 UserStore 또는 Store에서 관리 가능)
     private static final int DEFAULT_HOURLY_WAGE = LaborLawConstants.MINIMUM_WAGE_2025;
@@ -60,6 +63,9 @@ public class PayrollService {
     @Transactional(readOnly = true)
     public OwnerPayrollSummaryDto getStorePayrollSummary(Long userId, int year, int month) {
         Long storeId = authorizationService.getActiveStoreIdOrThrow(userId);
+
+        log.info("userId={}, storeId={}", userId, storeId);
+
 
         // OWNER 권한 확인
         UserStore ownerUserStore = userStoreRepository.findByUser_IdAndStore_Id(userId, storeId)
@@ -444,6 +450,148 @@ public class PayrollService {
             return 30;
         }
         return 0;
+    }
+
+    // ==================== Admin: 최저임금 관리 ====================
+
+    /**
+     * Admin: 최저임금 등록/수정
+     */
+    @Transactional
+    public MinimumWage updateMinimumWage(MinimumWageUpdateDto dto) {
+        log.info("⚙️ [Admin] 최저임금 업데이트 - {}원 (적용: {} ~ {})",
+                dto.getHourlyWage(), dto.getEffectiveFrom(), dto.getEffectiveTo());
+
+        // 기존 레코드가 있으면 종료일 설정
+        minimumWageRepository.findCurrentMinimumWage().ifPresent(current -> {
+            if (dto.getEffectiveFrom() != null && current.getEffectiveFrom().isBefore(dto.getEffectiveFrom())) {
+                current.updateWageInfo(
+                        current.getHourlyWage(),
+                        current.getEffectiveFrom(),
+                        dto.getEffectiveFrom().minusDays(1),
+                        current.getDescription()
+                );
+                minimumWageRepository.save(current);
+            }
+        });
+
+        // 새 최저임금 등록
+        MinimumWage newWage = MinimumWage.builder()
+                .hourlyWage(dto.getHourlyWage())
+                .effectiveFrom(dto.getEffectiveFrom() != null ? dto.getEffectiveFrom() : LocalDate.now())
+                .effectiveTo(dto.getEffectiveTo())
+                .description(dto.getDescription())
+                .build();
+
+        return minimumWageRepository.save(newWage);
+    }
+
+    /**
+     * 특정 연도의 최저임금 조회
+     */
+    @Transactional(readOnly = true)
+    public MinimumWage getMinimumWage(int year) {
+        return minimumWageRepository.findByYear(year)
+                .orElseGet(() -> {
+                    log.warn("⚠️ {}년 최저임금 데이터 없음, 기본값 반환", year);
+                    return MinimumWage.builder()
+                            .hourlyWage(DEFAULT_HOURLY_WAGE)
+                            .effectiveFrom(LocalDate.of(year, 1, 1))
+                            .description("기본 최저임금")
+                            .build();
+                });
+    }
+
+    /**
+     * 현재 적용 중인 최저임금 조회
+     */
+    @Transactional(readOnly = true)
+    public MinimumWage getCurrentMinimumWage() {
+        return minimumWageRepository.findCurrentMinimumWage()
+                .orElseGet(() -> MinimumWage.builder()
+                        .hourlyWage(DEFAULT_HOURLY_WAGE)
+                        .effectiveFrom(LocalDate.now())
+                        .description("기본 최저임금")
+                        .build());
+    }
+
+    // ==================== Owner: 직원 시급 관리 ====================
+
+    /**
+     * Owner: 직원 시급 설정
+     */
+    @Transactional
+    public void updateStaffWage(Long ownerId, Long userStoreId, Integer hourlyWage) {
+        Long storeId = authorizationService.getActiveStoreIdOrThrow(ownerId);
+
+        // OWNER 권한 확인
+        UserStore ownerUserStore = userStoreRepository.findByUser_IdAndStore_Id(ownerId, storeId)
+                .orElseThrow(() -> new ForbiddenException("해당 매장에 대한 권한이 없습니다."));
+
+        if (ownerUserStore.getPosition() != UserStore.Position.OWNER) {
+            throw new ForbiddenException("직원 시급 설정은 OWNER만 가능합니다.");
+        }
+
+        // 대상 직원 조회
+        UserStore targetStaff = userStoreRepository.findById(userStoreId)
+                .orElseThrow(() -> new NotFoundException("해당 직원을 찾을 수 없습니다."));
+
+        // 해당 매장 소속 직원인지 확인
+        if (!targetStaff.getStore().getId().equals(storeId)) {
+            throw new ForbiddenException("해당 직원은 이 매장 소속이 아닙니다.");
+        }
+
+        targetStaff.updateHourlyWage(hourlyWage);
+        userStoreRepository.save(targetStaff);
+
+        log.info("💰 [시급설정] 직원 userStoreId={} 시급 변경: {}원", userStoreId, hourlyWage);
+    }
+
+    /**
+     * Owner: 매장 전체 직원 시급 목록 조회
+     */
+    @Transactional(readOnly = true)
+    public StoreStaffWagesResponseDto getAllStaffWages(Long ownerId) {
+        Long storeId = authorizationService.getActiveStoreIdOrThrow(ownerId);
+
+        // OWNER 권한 확인
+        UserStore ownerUserStore = userStoreRepository.findByUser_IdAndStore_Id(ownerId, storeId)
+                .orElseThrow(() -> new ForbiddenException("해당 매장에 대한 권한이 없습니다."));
+
+        if (ownerUserStore.getPosition() != UserStore.Position.OWNER) {
+            throw new ForbiddenException("직원 시급 조회는 OWNER만 가능합니다.");
+        }
+
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new NotFoundException("매장을 찾을 수 없습니다."));
+
+        // 현재 최저임금 조회
+        MinimumWage currentMinWage = getCurrentMinimumWage();
+        int minimumWage = currentMinWage.getHourlyWage();
+
+        // 매장의 모든 STAFF 조회
+        List<UserStore> staffList = userStoreRepository.findByStore_IdAndPosition(storeId, UserStore.Position.STAFF);
+
+        List<StaffWageInfoDto> wageInfos = staffList.stream()
+                .map(staff -> {
+                    Integer staffWage = staff.getHourlyWage();
+                    int effectiveWage = (staffWage != null) ? staffWage : minimumWage;
+
+                    return StaffWageInfoDto.builder()
+                            .userStoreId(staff.getId())
+                            .staffName(staff.getUser().getUsername())
+                            .hourlyWage(staffWage)
+                            .effectiveWage(effectiveWage)
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        return StoreStaffWagesResponseDto.builder()
+                .storeId(storeId)
+                .storeName(store.getName())
+                .currentMinimumWage(minimumWage)
+                .staffWages(wageInfos)
+                .build();
     }
 }
 
