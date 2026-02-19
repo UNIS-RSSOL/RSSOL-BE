@@ -29,7 +29,7 @@ public class AuthController {
 
         // 프론트 리다이렉트 URL 없으면 기본 Vercel 배포 주소 사용
         if (redirectUri == null || redirectUri.isBlank()) {
-            redirectUri = "https://rssol.vercel.app/auth/kakao/callback";
+            redirectUri = "https://rssolplan.com/auth/kakao/callback";
         }
 
         String targetUrl = redirectUri

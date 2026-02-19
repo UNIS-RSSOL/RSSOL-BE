@@ -1,5 +1,6 @@
 package com.example.unis_rssol.domain.onboarding.dto;
 
+import com.example.unis_rssol.domain.store.setting.StoreSettingDto;
 import lombok.Getter;
 
 import java.time.LocalDate;
@@ -14,6 +15,9 @@ public class OnboardingRequest {
     private String address;   // OWNER일 경우 새 매장 주소
     private String phoneNumber;
     private String businessRegistrationNumber;
+
+    // OWNER
+    private StoreSettingDto storeSetting;
 
     // 은행 계좌 정보 (STAFF, OWNER 공통)
     private Integer bankId;
