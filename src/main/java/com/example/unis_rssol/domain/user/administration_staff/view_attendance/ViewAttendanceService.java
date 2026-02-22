@@ -4,6 +4,8 @@ import com.example.unis_rssol.domain.schedule.attendance.Attendance;
 import com.example.unis_rssol.domain.schedule.attendance.AttendanceRepository;
 import com.example.unis_rssol.domain.schedule.generation.entity.WorkShift;
 import com.example.unis_rssol.domain.schedule.workshifts.WorkShiftRepository;
+import com.example.unis_rssol.domain.store.UserStore;
+import com.example.unis_rssol.domain.store.UserStoreRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,13 +19,31 @@ public class ViewAttendanceService {
 
     private final AttendanceRepository attendanceRepository;
     private final WorkShiftRepository workShiftRepository;
+    private final UserStoreRepository userStoreRepository;
 
     @Transactional(readOnly = true)
     public ViewAttendanceResponse getEmployeeAttendance(
+            Long ownerId,
             Long userStoreId,
             LocalDate startDate,
             LocalDate endDate
     ) {
+
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("INVALID_DATE_RANGE");
+        }
+
+        UserStore userStore = userStoreRepository.findById(userStoreId)
+                .orElseThrow(() -> new IllegalArgumentException("USER_STORE_NOT_FOUND"));
+
+        boolean isOwner = userStoreRepository
+                .findByUser_IdAndStore_Id(ownerId, userStore.getStore().getId())
+                .stream()
+                .anyMatch(us -> us.getPosition() == UserStore.Position.OWNER);
+
+        if (!isOwner) {
+            throw new IllegalArgumentException("ACCESS_DENIED");
+        }
 
         List<Attendance> attendanceList =
                 attendanceRepository.findByUserStoreIdAndWorkDateBetween(
@@ -32,19 +52,19 @@ public class ViewAttendanceService {
 
         List<WorkShift> shiftList =
                 workShiftRepository.findMyShifts(
-                        userStoreId,
+                        userStore.getUser().getId(),  // userId 유지
                         startDate.atStartOfDay(),
                         endDate.atTime(23, 59, 59)
                 );
 
         Map<LocalDate, Attendance> attendanceMap = new HashMap<>();
-        for (Attendance attendance : attendanceList) {
-            attendanceMap.put(attendance.getWorkDate(), attendance);
+        for (Attendance a : attendanceList) {
+            attendanceMap.put(a.getWorkDate(), a);
         }
 
         Map<LocalDate, WorkShift> shiftMap = new HashMap<>();
-        for (WorkShift shift : shiftList) {
-            shiftMap.put(shift.getStartDatetime().toLocalDate(), shift);
+        for (WorkShift s : shiftList) {
+            shiftMap.put(s.getStartDatetime().toLocalDate(), s);
         }
 
         List<ViewAttendanceDayDto> result = new ArrayList<>();
@@ -56,9 +76,8 @@ public class ViewAttendanceService {
             WorkShift shift = shiftMap.get(date);
             Attendance attendance = attendanceMap.get(date);
 
-            String status = resolveAttendance(shift, attendance);
-
-            result.add(new ViewAttendanceDayDto(date, status));
+            result.add(new ViewAttendanceDayDto(date,
+                    resolveAttendance(shift, attendance)));
         }
 
         return new ViewAttendanceResponse(
@@ -71,23 +90,15 @@ public class ViewAttendanceService {
 
     private String resolveAttendance(WorkShift shift, Attendance attendance) {
 
-        // 1. 휴무
-        if (shift == null) {
-            return "OFF";
-        }
+        if (shift == null) return "OFF";
 
-        // 2️. 결근
-        if (attendance == null || !attendance.isCheckedIn()) {
+        if (attendance == null || !attendance.isCheckedIn())
             return "ABSENT";
-        }
 
-        // 3. 지각
         if (attendance.getCheckInTime()
-                .isAfter(shift.getStartDatetime())) {
+                .isAfter(shift.getStartDatetime()))
             return "LATE";
-        }
 
-        // 4. 정상 출근
         return "NORMAL";
     }
 }

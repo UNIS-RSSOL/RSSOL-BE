@@ -19,10 +19,22 @@ public class ViewProfileService {
     private final BankAccountRepository bankAccountRepository;
 
     @Transactional(readOnly = true)
-    public ViewProfileResponse getEmployeeProfile(Long userStoreId) {
+    public ViewProfileResponse getEmployeeProfile(
+            Long ownerId,
+            Long userStoreId
+    ) {
 
         UserStore userStore = userStoreRepository.findById(userStoreId)
                 .orElseThrow(() -> new IllegalArgumentException("USER_STORE_NOT_FOUND"));
+
+        boolean isOwner = userStoreRepository
+                .findByUser_IdAndStore_Id(ownerId, userStore.getStore().getId())
+                .stream()
+                .anyMatch(us -> us.getPosition() == UserStore.Position.OWNER);
+
+        if (!isOwner) {
+            throw new IllegalArgumentException("ACCESS_DENIED");
+        }
 
         var user = userStore.getUser();
         var store = userStore.getStore();
@@ -33,10 +45,9 @@ public class ViewProfileService {
 
         LocalDate hireDate = userStore.getHireDate();
 
-        long daysWorked = 0;
-        if (hireDate != null) {
-            daysWorked = ChronoUnit.DAYS.between(hireDate, LocalDate.now());
-        }
+        long daysWorked = hireDate != null
+                ? ChronoUnit.DAYS.between(hireDate, LocalDate.now())
+                : 0;
 
         return new ViewProfileResponse(
                 user.getUsername(),

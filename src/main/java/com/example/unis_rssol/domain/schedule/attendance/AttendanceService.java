@@ -2,6 +2,8 @@ package com.example.unis_rssol.domain.schedule.attendance;
 
 import com.example.unis_rssol.domain.schedule.attendance.dto.*;
 import com.example.unis_rssol.domain.schedule.generation.entity.WorkShift;
+import com.example.unis_rssol.domain.store.UserStore;
+import com.example.unis_rssol.domain.store.UserStoreRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,22 +17,27 @@ public class AttendanceService {
 
     private final AttendanceRepository attendanceRepository;
     private final AttendanceHelper attendanceHelper;
+    private final UserStoreRepository userStoreRepository;
 
-    @Transactional(readOnly = true)
-    public AttendanceTodayResponse getTodayAttendance(Long userStoreId) {
-        LocalDate today = LocalDate.now();
 
-        return attendanceRepository.findByUserStoreIdAndWorkDate(userStoreId, today)
-                .map(attendance -> {
-                    WorkShift shift = attendanceHelper.getWorkShiftIfExists(attendance.getWorkShiftId());
-                    return attendanceHelper.mapToTodayResponse(attendance, shift);
-                })
-                .orElseGet(() -> attendanceHelper.createAttendance(userStoreId, today));
+    private Long resolveUserStoreId(Long userId) {
+        return userStoreRepository.findFirstByUser_IdOrderByCreatedAtAsc(userId)
+                .map(UserStore::getId)
+                .orElseThrow(() -> new IllegalStateException("USER_STORE_NOT_FOUND"));
     }
 
+
     @Transactional
-    public AttendanceCheckInResponse checkIn(Long userStoreId) {
-        Attendance attendance = getTodayAttendanceEntity(userStoreId);
+    public AttendanceTodayResponse getTodayAttendanceByUserId(Long userId) {
+        Long userStoreId = resolveUserStoreId(userId);
+        return getOrCreateToday(userStoreId);
+    }
+
+
+    @Transactional
+    public AttendanceCheckInResponse checkInByUserId(Long userId) {
+        Long userStoreId = resolveUserStoreId(userId);
+        Attendance attendance = getOrCreateTodayEntity(userStoreId);
 
         if (attendance.getStatus() == AttendanceStatus.NO_SCHEDULE)
             throw new IllegalStateException("오늘 날짜에 해당하는 스케줄이 없습니다.");
@@ -53,8 +60,9 @@ public class AttendanceService {
     }
 
     @Transactional
-    public AttendanceCheckOutResponse checkOut(Long userStoreId) {
-        Attendance attendance = getTodayAttendanceEntity(userStoreId);
+    public AttendanceCheckOutResponse checkOutByUserId(Long userId) {
+        Long userStoreId = resolveUserStoreId(userId);
+        Attendance attendance = getOrCreateTodayEntity(userStoreId);
 
         if (attendance.getStatus() == AttendanceStatus.NO_SCHEDULE)
             throw new IllegalStateException("오늘 날짜에 해당하는 스케줄이 없습니다.");
@@ -76,10 +84,26 @@ public class AttendanceService {
         );
     }
 
-    @Transactional(readOnly = true)
-    private Attendance getTodayAttendanceEntity(Long userStoreId) {
+
+    private AttendanceTodayResponse getOrCreateToday(Long userStoreId) {
         LocalDate today = LocalDate.now();
+
         return attendanceRepository.findByUserStoreIdAndWorkDate(userStoreId, today)
-                .orElseThrow(() -> new IllegalStateException("ATTENDANCE_NOT_FOUND"));
+                .map(attendance -> {
+                    WorkShift shift = attendanceHelper.getWorkShiftIfExists(attendance.getWorkShiftId());
+                    return attendanceHelper.mapToTodayResponse(attendance, shift);
+                })
+                .orElseGet(() -> attendanceHelper.createAttendance(userStoreId, today));
+    }
+
+    private Attendance getOrCreateTodayEntity(Long userStoreId) {
+        LocalDate today = LocalDate.now();
+
+        return attendanceRepository.findByUserStoreIdAndWorkDate(userStoreId, today)
+                .orElseGet(() -> {
+                    attendanceHelper.createAttendance(userStoreId, today);
+                    return attendanceRepository.findByUserStoreIdAndWorkDate(userStoreId, today)
+                            .orElseThrow(() -> new IllegalStateException("ATTENDANCE_CREATE_FAILED"));
+                });
     }
 }

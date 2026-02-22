@@ -14,17 +14,17 @@ public class AttendanceController {
     private final AttendanceService attendanceService;
 
     @GetMapping("/today")
-    public AttendanceTodayResponse getToday(@AuthenticationPrincipal Long userStoreId) {
-        return attendanceService.getTodayAttendance(userStoreId);
+    public AttendanceTodayResponse getToday(@AuthenticationPrincipal Long userId) {
+        return attendanceService.getTodayAttendanceByUserId(userId);
     }
 
     @PostMapping("/check-in")
-    public AttendanceCheckInResponse checkIn(@AuthenticationPrincipal Long userStoreId) {
-        return attendanceService.checkIn(userStoreId);
+    public AttendanceCheckInResponse checkIn(@AuthenticationPrincipal Long userId) {
+        return attendanceService.checkInByUserId(userId);
     }
 
     @PostMapping("/check-out")
-    public AttendanceCheckOutResponse checkOut(@AuthenticationPrincipal Long userStoreId) {
-        return attendanceService.checkOut(userStoreId);
+    public AttendanceCheckOutResponse checkOut(@AuthenticationPrincipal Long userId) {
+        return attendanceService.checkOutByUserId(userId);
     }
 }
