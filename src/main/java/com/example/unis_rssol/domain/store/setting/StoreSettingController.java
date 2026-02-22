@@ -11,7 +11,7 @@ import java.util.Map;
 
 /**
  * 매장 설정 API
- * <p>
+ *
  * - 기본 설정 조회/수정
  * - 임시 설정 저장/조회/적용 (스케줄 생성 시 사용)
  */
@@ -57,7 +57,7 @@ public class StoreSettingController {
     /**
      * 임시 설정 저장 (Redis)
      * POST /api/store-settings/temporary
-     * <p>
+     *
      * 스케줄 생성 시 설정을 임시로 수정할 때 사용
      * 반환: Redis key
      */

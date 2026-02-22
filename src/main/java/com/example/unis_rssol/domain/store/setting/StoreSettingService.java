@@ -26,7 +26,7 @@ public class StoreSettingService {
     private static final String TEMP_SETTING_PREFIX = "temp_store_setting:store:";
 
     /**
-     * 온보딩 시 기본 매장 설정 저장
+     * 온보딩 시 기본 매장 설정 저장 (시간대만 저장, 인원수는 스케줄 생성 시 별도)
      */
     @Transactional
     public StoreSetting createStoreSetting(Store store, StoreSettingDto dto) {
@@ -35,19 +35,17 @@ public class StoreSettingService {
                 .openTime(dto.getOpenTime())
                 .closeTime(dto.getCloseTime())
                 .useSegments(dto.isUseSegments())
-                .requiredStaff(dto.getRequiredStaff())
                 .hasBreakTime(dto.isHasBreakTime())
                 .breakStartTime(dto.getBreakStartTime())
                 .breakEndTime(dto.getBreakEndTime())
                 .build();
 
-        // 세그먼트 사용 시 세그먼트 추가
+        // 세그먼트 사용 시 세그먼트 추가 (시간대만)
         if (dto.isUseSegments() && dto.getSegments() != null) {
             for (SegmentDto seg : dto.getSegments()) {
                 StoreSettingSegment segment = StoreSettingSegment.builder()
                         .startTime(seg.getStartTime())
                         .endTime(seg.getEndTime())
-                        .requiredStaff(seg.getRequiredStaff())
                         .build();
                 setting.addSegment(segment);
             }
@@ -74,7 +72,7 @@ public class StoreSettingService {
     }
 
     /**
-     * 매장 설정 업데이트 (PATCH)
+     * 매장 설정 업데이트 (PATCH) - 시간대만 업데이트
      */
     @Transactional
     public StoreSetting updateStoreSetting(Long storeId, StoreSettingDto dto) {
@@ -83,19 +81,17 @@ public class StoreSettingService {
         if (dto.getOpenTime() != null) setting.setOpenTime(dto.getOpenTime());
         if (dto.getCloseTime() != null) setting.setCloseTime(dto.getCloseTime());
         setting.setUseSegments(dto.isUseSegments());
-        if (dto.getRequiredStaff() != null) setting.setRequiredStaff(dto.getRequiredStaff());
         setting.setHasBreakTime(dto.isHasBreakTime());
         if (dto.getBreakStartTime() != null) setting.setBreakStartTime(dto.getBreakStartTime());
         if (dto.getBreakEndTime() != null) setting.setBreakEndTime(dto.getBreakEndTime());
 
-        // 세그먼트 업데이트
+        // 세그먼트 업데이트 (시간대만)
         if (dto.isUseSegments() && dto.getSegments() != null) {
             setting.clearSegments();
             for (SegmentDto seg : dto.getSegments()) {
                 StoreSettingSegment segment = StoreSettingSegment.builder()
                         .startTime(seg.getStartTime())
                         .endTime(seg.getEndTime())
-                        .requiredStaff(seg.getRequiredStaff())
                         .build();
                 setting.addSegment(segment);
             }
@@ -165,7 +161,6 @@ public class StoreSettingService {
                 .openTime(setting.getOpenTime())
                 .closeTime(setting.getCloseTime())
                 .useSegments(setting.isUseSegments())
-                .requiredStaff(setting.getRequiredStaff())
                 .hasBreakTime(setting.isHasBreakTime())
                 .breakStartTime(setting.getBreakStartTime())
                 .breakEndTime(setting.getBreakEndTime())
@@ -177,7 +172,6 @@ public class StoreSettingService {
                             .map(seg -> SegmentDto.builder()
                                     .startTime(seg.getStartTime())
                                     .endTime(seg.getEndTime())
-                                    .requiredStaff(seg.getRequiredStaff())
                                     .build())
                             .toList()
             );
@@ -193,5 +187,4 @@ public class StoreSettingService {
         return mapper;
     }
 }
-
 

@@ -12,6 +12,5 @@ import java.time.LocalTime;
 public class SegmentDto {
     private LocalTime startTime;
     private LocalTime endTime;
-    private int requiredStaff;
 }
 

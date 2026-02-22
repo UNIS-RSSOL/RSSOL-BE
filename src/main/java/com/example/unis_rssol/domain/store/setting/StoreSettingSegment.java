@@ -26,7 +26,4 @@ public class StoreSettingSegment {
 
     @Column(nullable = false)
     private LocalTime endTime;
-
-    @Column(nullable = false)
-    private int requiredStaff;
 }
