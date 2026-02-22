@@ -50,8 +50,7 @@ public class TodoService {
                 .collect(Collectors.toList());
 
         List<TodoResponseDto> personalTodos = allTodos.stream()
-                .filter(t -> t.getTodoType() == Todo.TodoType.PERSONAL
-                        && t.getUser().getId().equals(userId))  // 본인 것만 조회
+                .filter(t -> t.getTodoType() == Todo.TodoType.PERSONAL)
                 .map(TodoResponseDto::from)
                 .collect(Collectors.toList());
 
