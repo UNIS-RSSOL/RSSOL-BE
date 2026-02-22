@@ -59,6 +59,7 @@ public class SecurityConfig {
 
                     // OWNER 전용 API
                     auth.requestMatchers("/api/auth/onboarding/owner/**").hasRole("OWNER");
+                    auth.requestMatchers("/api/administration-staff/**").hasRole("OWNER");
 
                     // STAFF 전용 API
                     auth.requestMatchers("/api/auth/onboarding/staff/**").hasRole("STAFF");
