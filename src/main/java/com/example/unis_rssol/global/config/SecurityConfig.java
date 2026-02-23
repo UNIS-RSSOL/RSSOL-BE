@@ -59,6 +59,7 @@ public class SecurityConfig {
 
                     // OWNER 전용 API
                     auth.requestMatchers("/api/auth/onboarding/owner/**").hasRole("OWNER");
+                    auth.requestMatchers("/api/administration-staff/**").hasRole("OWNER");
 
                     // STAFF 전용 API
                     auth.requestMatchers("/api/auth/onboarding/staff/**").hasRole("STAFF");
@@ -83,7 +84,7 @@ public class SecurityConfig {
                 "https://connecti.store",
                 "http://localhost:3000",
                 "http://localhost:5173",
-                "https://rssol.vercel.app"
+                "https://rssolplan.com"
         ));
 
         // 허용 메서드

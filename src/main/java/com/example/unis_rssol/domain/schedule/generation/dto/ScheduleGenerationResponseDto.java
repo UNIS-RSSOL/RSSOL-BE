@@ -10,7 +10,7 @@ import java.util.List;
 @Setter
 public class ScheduleGenerationResponseDto {
     private String status;                     // "success" or "error"
-    private Long scheduleSettingsId;           // DB에 저장된 설정 ID
+    private Long scheduleRequestId;            // ScheduleRequest ID
     private Long storeId;
 
     private List<ScheduleSettingSegmentResponseDto> timeSegments; // 저장된 time slot 정보

@@ -42,7 +42,8 @@ public class SwaggerConfig {
                                 .bearerFormat("JWT")))
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .servers(List.of(
-                        new Server().url("https://connecti.store") // 실제 API 서버 주소
+                        new Server().url("http://localhost:8080"), // 실제 API 서버 주소
+                        new Server().url("https://api.rssolplan.com") // 실제 API 서버 주소
                 ));
     }
 }
