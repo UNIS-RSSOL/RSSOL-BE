@@ -28,10 +28,17 @@ jobs:
       - name: Build
         run: ./gradlew clean build -x test  # Gradle로 프로젝트를 빌드함. 테스트는 제외 (-x test)
 
-      - name: Login to ECR
-        uses: aws-actions/amazon-ecr-login@v1  # ECR에 로그인. 이후 Docker push를 하기 위함
+      # GitHub Actions에서 ECR에 이미지를 푸시하기 위한 자격 증명 (기존 Access Key 유지)
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2  # ECR에 로그인. 이후 Docker push를 하기 위함
+
 
       - name: Build and Push Docker Image
         run: |
@@ -46,22 +53,21 @@ jobs:
           username: ec2-user
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            aws ecr get-login-password --region ap-northeast-2 | \
-            docker login --username AWS --password-stdin 888042016323.dkr.ecr.ap-northeast-2.amazonaws.com
+            aws ecr get-login-password --region $AWS_REGION | \
+            docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
             
+            docker network create rssol-net || true
             
-            docker network create --ipv6=false rssol-net || true
-          
-
-            docker stop redis || true && docker rm redis || true
+            docker stop redis || true 
+            docker rm redis || true
+            
             docker run -d \
               --name redis \
               --network rssol-net \
-              -p 6379:6379 \
               redis:latest \
-          
-          
-
+            
+            
+            
             echo "Waiting for Redis to start..."
             counter=0
             while ! docker exec redis redis-cli ping 2>/dev/null | grep -q PONG; do
@@ -74,10 +80,13 @@ jobs:
               fi
             done
             echo "Redis is up and running!"
-          
-
-            docker stop app || true && docker rm app || true
+            
+            
+            docker stop app || true 
+            docker rm app || true
+            
             docker pull ${{ secrets.ECR_REPOSITORY }}:latest
+            
             docker run -d \
               --name app \
               --network rssol-net \
@@ -89,6 +98,4 @@ jobs:
               -e "KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}" \
               -e "KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}" \
               -e "KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}" \
-              --entrypoint "/bin/sh" \
               ${{ secrets.ECR_REPOSITORY }}:latest \
-              -c "java -jar /app.jar --spring.data.redis.host=172.19.0.2"
