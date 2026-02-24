@@ -42,9 +42,11 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          IMAGE_URI=${{ secrets.ECR_REPOSITORY }}:latest  # 사용할 Docker 이미지 태그 정의
-          docker build -t $IMAGE_URI .  # 현재 디렉토리(.)에 있는 Dockerfile을 기준으로 이미지 빌드
-          docker push $IMAGE_URI  # 빌드한 이미지를 ECR에 push (업로드)
+          IMAGE_TAG=${{ github.sha }}
+          IMAGE_URI=${{ secrets.ECR_REPOSITORY }}:latest
+          docker build -t $IMAGE_URI:$IMAGE_TAG -t $IMAGE_URI:latest .
+          docker push $IMAGE_URI:$IMAGE_TAG
+          docker push $IMAGE_URI:latest
 
       - name: SSH into EC2 and Deploy
         uses: appleboy/ssh-action@v1.0.0
@@ -87,7 +89,7 @@ jobs:
             
             docker image prune -a -f
             
-            docker pull ${{ secrets.ECR_REPOSITORY }}:latest
+            docker pull ${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
             
             docker run -d \
               --name app \
