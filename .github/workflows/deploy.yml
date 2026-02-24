@@ -85,6 +85,8 @@ jobs:
             docker stop app || true 
             docker rm app || true
             
+            docker image prune -a -
+            
             docker pull ${{ secrets.ECR_REPOSITORY }}:latest
             
             docker run -d \
