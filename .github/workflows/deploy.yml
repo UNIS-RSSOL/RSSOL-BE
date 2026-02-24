@@ -8,7 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest  # GitHub Actions가 사용하는 가상 머신 환경 (우분투 최신 버전)
     env:
-      AWS_REGION: ap-northeast-2
+      AWS_REGION: ${{ secrets.AWS_REGION }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
@@ -55,8 +55,14 @@ jobs:
           username: ec2-user
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            aws ecr get-login-password --region $AWS_REGION | \
-            docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+            REGION="${{ secrets.AWS_REGION }}"
+            ACCOUNT_ID="${{ secrets.AWS_ACCOUNT_ID }}"
+            ECR_REPO="${{ secrets.ECR_REPOSITORY }}"
+            IMAGE_TAG="${{ github.sha }}"
+
+
+            aws ecr get-login-password --region $REGION | \
+            docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
             
             docker network create rssol-net || true
             
