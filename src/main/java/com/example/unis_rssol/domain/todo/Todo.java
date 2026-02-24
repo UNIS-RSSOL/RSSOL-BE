@@ -51,6 +51,7 @@ public class Todo {
     private String content;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean completed = false;
 
     private LocalDateTime createdAt;

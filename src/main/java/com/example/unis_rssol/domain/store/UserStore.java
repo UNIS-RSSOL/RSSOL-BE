@@ -3,6 +3,7 @@ package com.example.unis_rssol.domain.store;
 import com.example.unis_rssol.domain.user.User;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -18,7 +19,9 @@ public class UserStore {
     @Enumerated(EnumType.STRING) private Position position; // OWNER or STAFF
     public enum Position { OWNER, STAFF }
 
-    @Enumerated(EnumType.STRING) private EmploymentStatus employmentStatus = EmploymentStatus.HIRED;
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private EmploymentStatus employmentStatus = EmploymentStatus.HIRED;
     public enum EmploymentStatus { HIRED, ON_LEAVE, RESIGNED }
 
     @Column(name = "hire_date")
