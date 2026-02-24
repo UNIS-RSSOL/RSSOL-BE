@@ -43,7 +43,7 @@ jobs:
       - name: Build and Push Docker Image
         run: |
           IMAGE_TAG=${{ github.sha }}
-          IMAGE_URI=${{ secrets.ECR_REPOSITORY }}:latest
+          IMAGE_URI=${{ secrets.ECR_REPOSITORY }}
           docker build -t $IMAGE_URI:$IMAGE_TAG -t $IMAGE_URI:latest .
           docker push $IMAGE_URI:$IMAGE_TAG
           docker push $IMAGE_URI:latest
