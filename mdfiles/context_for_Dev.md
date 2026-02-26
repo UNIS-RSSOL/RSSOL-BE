@@ -232,7 +232,7 @@ Controller → Service → Repository
 
 ```text
 
-com.example.rssol
+com.example.unis_rssol
 ├─domain
 │  ├─auth
 │  │  ├─dto
