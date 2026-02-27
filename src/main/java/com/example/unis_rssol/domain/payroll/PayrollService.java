@@ -59,8 +59,6 @@ public class PayrollService {
     private final AttendanceRepository attendanceRepository;
     private final BankAccountRepository bankAccountRepository;
 
-    // 기본 시급 (추후 UserStore 또는 Store에서 관리 가능)
-    private static final int DEFAULT_HOURLY_WAGE = LaborLawConstants.MINIMUM_WAGE_2025;
     // 5인 이상 사업장 여부 (추후 Store 설정으로 관리 가능)
     private static final boolean DEFAULT_FIVE_OR_MORE = true;
 
@@ -387,7 +385,7 @@ public class PayrollService {
      */
     private EmployeePayrollDto calculateEmployeePayroll(UserStore staff, List<WorkShift> shifts, int year, int month) {
         User user = staff.getUser();
-        int hourlyWage = staff.getHourlyWage() != null ? staff.getHourlyWage() : DEFAULT_HOURLY_WAGE;
+        int hourlyWage = staff.getHourlyWage() != null ? staff.getHourlyWage() : getMinimumHourlyWage(year, month);
         boolean isFiveOrMore = DEFAULT_FIVE_OR_MORE;
 
         // 해당 월의 출석 데이터 조회
@@ -613,7 +611,7 @@ public class PayrollService {
      * 출석(Attendance) 데이터를 반영하여 지각/결근 분을 고려
      */
     private StaffPayrollResponseDto calculateStaffPayroll(UserStore staff, List<WorkShift> shifts, int year, int month) {
-        int hourlyWage = staff.getHourlyWage() != null ? staff.getHourlyWage() : DEFAULT_HOURLY_WAGE;
+        int hourlyWage = staff.getHourlyWage() != null ? staff.getHourlyWage() : getMinimumHourlyWage(year, month);
         boolean isFiveOrMore = DEFAULT_FIVE_OR_MORE;
 
         // 해당 월의 출석 데이터 조회
@@ -769,7 +767,7 @@ public class PayrollService {
      * 출석(Attendance) 데이터를 반영하여 지각/결근 분을 고려
      */
     private StaffMyPayrollResponseDto calculateMyPayroll(UserStore userStore, List<WorkShift> shifts, int year, int month) {
-        int hourlyWage = userStore.getHourlyWage() != null ? userStore.getHourlyWage() : DEFAULT_HOURLY_WAGE;
+        int hourlyWage = userStore.getHourlyWage() != null ? userStore.getHourlyWage() : getMinimumHourlyWage(year, month);
         boolean isFiveOrMore = DEFAULT_FIVE_OR_MORE;
 
         // 해당 월의 출석 데이터 조회
@@ -1083,7 +1081,7 @@ public class PayrollService {
                 .orElseGet(() -> {
                     log.warn("⚠️ {}년 최저임금 데이터 없음, 기본값 반환", year);
                     return MinimumWage.builder()
-                            .hourlyWage(DEFAULT_HOURLY_WAGE)
+                            .hourlyWage(LaborLawConstants.MINIMUM_WAGE_2025)
                             .effectiveFrom(LocalDate.of(year, 1, 1))
                             .description("기본 최저임금")
                             .build();
@@ -1097,7 +1095,7 @@ public class PayrollService {
     public MinimumWage getCurrentMinimumWage() {
         return minimumWageRepository.findCurrentMinimumWage()
                 .orElseGet(() -> MinimumWage.builder()
-                        .hourlyWage(DEFAULT_HOURLY_WAGE)
+                        .hourlyWage(LaborLawConstants.MINIMUM_WAGE_2025)
                         .effectiveFrom(LocalDate.now())
                         .description("기본 최저임금")
                         .build());
@@ -1180,6 +1178,19 @@ public class PayrollService {
                 .currentMinimumWage(minimumWage)
                 .staffWages(wageInfos)
                 .build();
+    }
+
+    /**
+     * 특정 연월에 적용되는 최저임금 시급을 동적으로 조회한다.
+     * 해당 날짜의 적용 최저임금 → 현재 유효 최저임금 → 법정 기준값 순으로 fallback.
+     */
+    private int getMinimumHourlyWage(int year, int month) {
+        LocalDate targetDate = LocalDate.of(year, month, 1);
+        return minimumWageRepository.findByEffectiveDate(targetDate)
+                .map(MinimumWage::getHourlyWage)
+                .orElseGet(() -> minimumWageRepository.findCurrentMinimumWage()
+                        .map(MinimumWage::getHourlyWage)
+                        .orElse(LaborLawConstants.MINIMUM_WAGE_2025));
     }
 }
 
