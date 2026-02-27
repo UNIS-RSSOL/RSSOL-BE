@@ -14,13 +14,11 @@ import java.time.LocalTime;
 
 /**
  * 급여 계산 서비스
- *
  * 한국 근로기준법 기준:
  * - 연장근무: 1일 8시간 초과 시 통상임금의 50% 가산 (5인 이상)
  * - 야간근무: 22:00~06:00 근무 시 통상임금의 50% 가산 (5인 이상)
  * - 휴일근무: 법정휴일 근무 시 통상임금의 50% 가산 (5인 이상)
  * - 휴일연장근무: 휴일 8시간 초과 시 100% 가산 (휴일 50% + 연장 50%)
- *
  * 5인 미만 사업장: 연장/야간/휴일 가산수당 미적용 (기본급만)
  * 5인 이상 사업장: 가산수당 적용
  */
@@ -142,6 +140,21 @@ public class PayCalculatorService {
      * @return 야간 근무 시간 (분)
      */
     private long calculateNightMinutes(LocalDateTime start, LocalDateTime end) {
-        return TimeRangeUtil.calculateNightMinutes(start, end);
+        long nightMinutes = 0;
+        LocalDateTime current = start;
+
+        while (current.isBefore(end)) {
+            LocalTime currentTime = current.toLocalTime();
+
+            // 22:00 ~ 23:59:59 또는 00:00 ~ 06:00
+            boolean isNightTime = !currentTime.isBefore(NIGHT_START) || currentTime.isBefore(NIGHT_END);
+
+            if (isNightTime) {
+                nightMinutes++;
+            }
+            current = current.plusMinutes(1);
+        }
+
+        return nightMinutes;
     }
 }
