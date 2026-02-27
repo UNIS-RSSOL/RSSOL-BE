@@ -30,6 +30,7 @@ public class StaffPayrollResponseDto {
     private long overtimeMinutes;       // 총 연장 근무 시간
     private long nightWorkMinutes;      // 총 야간 근무 시간
     private long holidayWorkMinutes;    // 총 휴일 근무 시간
+    private long lateMinutes;           // 총 지각 시간 (분)
 
     // 수당 금액
     private BigDecimal basePay;         // 기본급

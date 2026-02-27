@@ -108,6 +108,95 @@ public class PayrollController {
         return ResponseEntity.ok(payrolls);
     }
 
+    // ==================== 매장 전체 인건비 합산 API ====================
+
+    /**
+     * OWNER: 매장 전체 인건비 합산 조회
+     * - 매장의 모든 직원 급여 합산
+     * - 직원별 급여 상세 목록 포함
+     *
+     * @param userId 현재 로그인 사용자 ID
+     * @param year   조회 연도 (기본값: 현재 연도)
+     * @param month  조회 월 (기본값: 현재 월)
+     * @return 매장 전체 급여 요약 (StorePayrollSummaryDto)
+     */
+    @OwnerOnly
+    @GetMapping("/store/total")
+    public ResponseEntity<StorePayrollSummaryDto> getStorePayrollTotal(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month
+    ) {
+        LocalDate now = LocalDate.now();
+        int targetYear = (year != null) ? year : now.getYear();
+        int targetMonth = (month != null) ? month : now.getMonthValue();
+
+        log.info("📊 [인건비합산] OWNER userId={} 매장 전체 인건비 조회 - {}/{}",
+                userId, targetYear, targetMonth);
+
+        StorePayrollSummaryDto summary = payrollService.getStorePayrollTotal(userId, targetYear, targetMonth);
+        return ResponseEntity.ok(summary);
+    }
+
+    // ==================== 내가 속한 모든 매장의 급여 합산 API ====================
+
+    /**
+     * STAFF: 내가 속한 모든 매장의 급여 조회 (합산 포함)
+     * - userId 기준 모든 매장 급여 합산
+     * - 매장별 급여 상세 목록 포함
+     *
+     * @param userId 현재 로그인 사용자 ID
+     * @param year   조회 연도 (기본값: 현재 연도)
+     * @param month  조회 월 (기본값: 현재 월)
+     * @return 내가 속한 모든 매장 급여 (MyPayrollListDto)
+     */
+    @GetMapping("/me/total")
+    public ResponseEntity<MyPayrollListDto> getMyPayrollsTotal(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month
+    ) {
+        LocalDate now = LocalDate.now();
+        int targetYear = (year != null) ? year : now.getYear();
+        int targetMonth = (month != null) ? month : now.getMonthValue();
+
+        log.info("📊 [내급여합산] userId={} 모든 매장 급여 조회 - {}/{}",
+                userId, targetYear, targetMonth);
+
+        MyPayrollListDto payrolls = payrollService.getMyPayrollsTotal(userId, targetYear, targetMonth);
+        return ResponseEntity.ok(payrolls);
+    }
+
+    // ==================== 특정 직원 급여 상세 API (EmployeePayrollDto 형식) ====================
+
+    /**
+     * OWNER: 특정 직원의 급여 상세 조회 (상세 형식)
+     *
+     * @param userId      현재 로그인 사용자 ID
+     * @param userStoreId 조회할 직원의 UserStore ID
+     * @param year        조회 연도 (기본값: 현재 연도)
+     * @param month       조회 월 (기본값: 현재 월)
+     * @return 직원 급여 상세 (EmployeePayrollDto)
+     */
+    @OwnerOnly
+    @GetMapping("/store/employee/{userStoreId}")
+    public ResponseEntity<EmployeePayrollDto> getEmployeePayrollDetail(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long userStoreId,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month
+    ) {
+        LocalDate now = LocalDate.now();
+        int targetYear = (year != null) ? year : now.getYear();
+        int targetMonth = (month != null) ? month : now.getMonthValue();
+
+        log.info("📊 [직원급여상세] OWNER userId={} 직원 userStoreId={} 급여 상세 조회 - {}/{}",
+                userId, userStoreId, targetYear, targetMonth);
+
+        EmployeePayrollDto detail = payrollService.getEmployeePayrollDetail(userId, userStoreId, targetYear, targetMonth);
+        return ResponseEntity.ok(detail);
+    }
+
     // ==================== Admin: 최저임금 관리 API ====================
 
     /**

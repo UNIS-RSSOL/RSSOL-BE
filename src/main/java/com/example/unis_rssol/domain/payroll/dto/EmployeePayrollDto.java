@@ -8,52 +8,43 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 /**
- * 직원별 급여 상세 정보
+ * 개별 직원의 월별 급여 상세 정보 DTO
+ * - 특정 매장의 특정 직원 급여 상세 조회
+ * - 내가 속한 매장별 급여 조회
  */
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class EmployeePayrollDto {
-    private Long userStoreId;
-    private Long userId;
-    private String username;
-    private String storeName;
 
-    // 시급 정보
-    private Integer hourlyWage;        // 적용 시급
+    private Long userStoreId;           // UserStore ID
+    private Long userId;                // User ID
+    private String username;            // 직원 이름
+    private String profileImageUrl;     // 프로필 이미지 URL
+    private String storeName;           // 매장 이름
+    private int hourlyWage;             // 시급
 
     // 근무 시간 (분 단위)
-    private Integer totalWorkMinutes;  // 총 근무시간 (분)
-    private Integer regularMinutes;    // 기본근무시간 (분)
-    private Integer overtimeMinutes;   // 연장근무시간 (분) - 하루 8시간 초과
-    private Integer nightMinutes;      // 야간근무시간 (분) - 22시~06시
-    private Integer holidayMinutes;    // 휴일근무시간 (분)
-    private Integer breakMinutes;      // 휴게시간 (분)
+    private long totalWorkMinutes;      // 총 근무 시간 (휴게시간 제외)
+    private long regularMinutes;        // 기본 근무 시간 (8시간 이내)
+    private long overtimeMinutes;       // 연장 근무 시간 (8시간 초과)
+    private long nightMinutes;          // 야간 근무 시간 (22:00~06:00)
+    private long holidayMinutes;        // 휴일 근무 시간
+    private long breakMinutes;          // 총 휴게 시간
+    private long lateMinutes;           // 총 지각 시간
 
-    // 급여 계산
-    private BigDecimal regularPay;     // 기본급
-    private BigDecimal overtimePay;    // 연장수당 (기본급의 50% 가산)
-    private BigDecimal nightPay;       // 야간수당 (기본급의 50% 가산)
-    private BigDecimal holidayPay;     // 휴일수당 (기본급의 50% 가산)
-    private BigDecimal weeklyHolidayPay; // 주휴수당
+    // 수당 금액
+    private BigDecimal regularPay;      // 기본급
+    private BigDecimal overtimePay;     // 연장수당
+    private BigDecimal nightPay;        // 야간수당
+    private BigDecimal holidayPay;      // 휴일수당
+    private BigDecimal weeklyHolidayPay;// 주휴수당
+    private BigDecimal totalPay;        // 총 급여
 
-    private BigDecimal totalPay;       // 총 급여
-
-    // 근무 시간 (시간:분 형식)
-    public String getTotalWorkTimeFormatted() {
-        return formatMinutes(totalWorkMinutes);
-    }
-
-    public String getBreakTimeFormatted() {
-        return formatMinutes(breakMinutes);
-    }
-
-    private String formatMinutes(Integer minutes) {
-        if (minutes == null || minutes == 0) return "0시간 0분";
-        int hours = minutes / 60;
-        int mins = minutes % 60;
-        return hours + "시간 " + mins + "분";
-    }
+    // 출결 정보
+    private int totalShiftCount;        // 총 근무 일수
+    private int lateCount;              // 지각 횟수
+    private int absenceCount;           // 결근 횟수
 }
 
