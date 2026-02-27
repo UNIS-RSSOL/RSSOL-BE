@@ -10,6 +10,7 @@ import java.time.LocalDate;
 public class ViewProfileResponse {
 
     private String username;
+    private String profileImageUrl;
     private String status;       // HIRED, ON_LEAVE, RESIGNED
     private String position;     // OWNER, STAFF
     private String storeName;

@@ -51,6 +51,7 @@ public class ViewProfileService {
 
         return new ViewProfileResponse(
                 user.getUsername(),
+                user.getProfileImageUrl(),
                 userStore.getEmploymentStatus().name(),
                 userStore.getPosition().name(),
                 store.getName(),
