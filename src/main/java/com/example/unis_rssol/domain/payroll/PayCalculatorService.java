@@ -142,21 +142,6 @@ public class PayCalculatorService {
      * @return 야간 근무 시간 (분)
      */
     private long calculateNightMinutes(LocalDateTime start, LocalDateTime end) {
-        long nightMinutes = 0;
-        LocalDateTime current = start;
-
-        while (current.isBefore(end)) {
-            LocalTime currentTime = current.toLocalTime();
-
-            // 22:00 ~ 23:59:59 또는 00:00 ~ 06:00
-            boolean isNightTime = !currentTime.isBefore(NIGHT_START) || currentTime.isBefore(NIGHT_END);
-
-            if (isNightTime) {
-                nightMinutes++;
-            }
-            current = current.plusMinutes(1);
-        }
-
-        return nightMinutes;
+        return TimeRangeUtil.calculateNightMinutes(start, end);
     }
 }
