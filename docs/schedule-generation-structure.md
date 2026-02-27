@@ -162,26 +162,5 @@ public static ScheduleSettingSnapshot fromStoreSettingWithStaff(
 |--------------------------------|--------------------------------------------|--------------------|
 | `POST /api/schedules/requests` | `settingSourceType`, `temporarySettingKey` | `staffRequirement` |
 
----
 
-## 데이터베이스 마이그레이션
-
-### store_setting 테이블
-
-```sql
-ALTER TABLE store_setting DROP COLUMN required_staff;
-```
-
-### store_setting_segment 테이블
-
-```sql
-ALTER TABLE store_setting_segment DROP COLUMN required_staff;
-```
-
-### schedule_request 테이블
-
-```sql
-ALTER TABLE schedule_request DROP COLUMN setting_source_type;
--- temporary_setting_key는 인원수 정보 저장용으로 유지
-```
 
