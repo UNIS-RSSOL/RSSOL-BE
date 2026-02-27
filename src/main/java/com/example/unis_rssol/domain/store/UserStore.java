@@ -19,7 +19,9 @@ public class UserStore {
     @Enumerated(EnumType.STRING) private Position position; // OWNER or STAFF
     public enum Position { OWNER, STAFF }
 
-    @Enumerated(EnumType.STRING) private EmploymentStatus employmentStatus = EmploymentStatus.HIRED;
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private EmploymentStatus employmentStatus = EmploymentStatus.HIRED;
     public enum EmploymentStatus { HIRED, ON_LEAVE, RESIGNED }
 
     @Column(name = "hire_date")

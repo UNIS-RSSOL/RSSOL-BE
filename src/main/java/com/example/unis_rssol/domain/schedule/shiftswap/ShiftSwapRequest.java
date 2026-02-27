@@ -38,10 +38,12 @@ public class ShiftSwapRequest {
     private String reason;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private Status status = Status.PENDING; // 1차 상태
 
     @Enumerated(EnumType.STRING)
     @Column(name = "manager_approval_status")
+    @Builder.Default
     private ManagerApproval managerApprovalStatus = ManagerApproval.PENDING; // 사장 승인 상태
 
     @CreationTimestamp
