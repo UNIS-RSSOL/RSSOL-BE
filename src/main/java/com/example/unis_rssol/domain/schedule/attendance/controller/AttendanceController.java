@@ -1,15 +1,10 @@
 package com.example.unis_rssol.domain.schedule.attendance.controller;
 
 import com.example.unis_rssol.domain.schedule.attendance.AttendanceService;
-import com.example.unis_rssol.domain.schedule.attendance.dto.AttendanceCheckInResponse;
-import com.example.unis_rssol.domain.schedule.attendance.dto.AttendanceCheckOutResponse;
-import com.example.unis_rssol.domain.schedule.attendance.dto.AttendanceTodayResponse;
+import com.example.unis_rssol.domain.schedule.attendance.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/attendance")

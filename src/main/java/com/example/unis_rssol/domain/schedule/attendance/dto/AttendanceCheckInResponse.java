@@ -12,5 +12,4 @@ public record AttendanceCheckInResponse(
         LocalDateTime checkInTime,
         LocalDateTime workStartTime,
         LocalDateTime workEndTime
-) {
-}
+) {}

@@ -1,8 +1,6 @@
 package com.example.unis_rssol.domain.schedule.attendance;
 
-import com.example.unis_rssol.domain.schedule.attendance.dto.AttendanceCheckInResponse;
-import com.example.unis_rssol.domain.schedule.attendance.dto.AttendanceCheckOutResponse;
-import com.example.unis_rssol.domain.schedule.attendance.dto.AttendanceTodayResponse;
+import com.example.unis_rssol.domain.schedule.attendance.dto.*;
 import com.example.unis_rssol.domain.schedule.generation.entity.WorkShift;
 import com.example.unis_rssol.domain.store.UserStore;
 import com.example.unis_rssol.domain.store.UserStoreRepository;
