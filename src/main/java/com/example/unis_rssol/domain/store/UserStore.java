@@ -27,7 +27,20 @@ public class UserStore {
     @Column(name = "hire_date")
     private LocalDate hireDate;
 
+    // 시급 (원 단위, null이면 최저임금 적용)
+    @Column(name = "hourly_wage")
+    private Integer hourlyWage;
+
     private LocalDateTime createdAt; private LocalDateTime updatedAt;
     @PrePersist void pre(){ createdAt=LocalDateTime.now(); updatedAt=LocalDateTime.now(); }
     @PreUpdate  void upd(){ updatedAt=LocalDateTime.now(); }
+
+    /**
+     * 직원 시급 업데이트
+     *
+     * @param hourlyWage 시급 (null이면 최저임금 적용)
+     */
+    public void updateHourlyWage(Integer hourlyWage) {
+        this.hourlyWage = hourlyWage;
+    }
 }
