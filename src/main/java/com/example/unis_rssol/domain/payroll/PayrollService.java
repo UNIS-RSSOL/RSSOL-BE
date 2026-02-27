@@ -1081,7 +1081,7 @@ public class PayrollService {
                 .orElseGet(() -> {
                     log.warn("⚠️ {}년 최저임금 데이터 없음, 기본값 반환", year);
                     return MinimumWage.builder()
-                            .hourlyWage(LaborLawConstants.MINIMUM_WAGE_2025)
+                            .hourlyWage(LaborLawConstants.FALLBACK_MINIMUM_WAGE)
                             .effectiveFrom(LocalDate.of(year, 1, 1))
                             .description("기본 최저임금")
                             .build();
@@ -1095,7 +1095,7 @@ public class PayrollService {
     public MinimumWage getCurrentMinimumWage() {
         return minimumWageRepository.findCurrentMinimumWage()
                 .orElseGet(() -> MinimumWage.builder()
-                        .hourlyWage(LaborLawConstants.MINIMUM_WAGE_2025)
+                        .hourlyWage(LaborLawConstants.FALLBACK_MINIMUM_WAGE)
                         .effectiveFrom(LocalDate.now())
                         .description("기본 최저임금")
                         .build());
@@ -1190,7 +1190,7 @@ public class PayrollService {
                 .map(MinimumWage::getHourlyWage)
                 .orElseGet(() -> minimumWageRepository.findCurrentMinimumWage()
                         .map(MinimumWage::getHourlyWage)
-                        .orElse(LaborLawConstants.MINIMUM_WAGE_2025));
+                        .orElse(LaborLawConstants.FALLBACK_MINIMUM_WAGE));
     }
 }
 

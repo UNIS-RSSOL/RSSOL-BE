@@ -16,8 +16,8 @@ public final class LaborLawConstants {
         // 인스턴스화 방지
     }
 
-    // 2025년 기준 최저임금
-    public static final int MINIMUM_WAGE_2025 = 10_030;
+    // DB에 최저임금 데이터가 없을 때 사용하는 최후 수단 fallback 시급 (단위: 원)
+    public static final int FALLBACK_MINIMUM_WAGE = 10_030;
 
     // 법정 근로시간
     public static final int DAILY_STANDARD_HOURS = 8;
