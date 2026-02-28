@@ -109,4 +109,6 @@ jobs:
               -e "KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}" \
               -e "KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}" \
               -e "KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}" \
+              -e "REDIS_HOST=${{ secrets.REDIS_HOST }}" \
+              -e "REDIS_PORT=${{ secrets.REDIS_PORT }}" \
               ${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}

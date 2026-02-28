@@ -12,4 +12,5 @@ public record AttendanceCheckOutResponse(
         LocalDateTime checkOutTime,
         LocalDateTime workStartTime,
         LocalDateTime workEndTime
-) {}
+) {
+}

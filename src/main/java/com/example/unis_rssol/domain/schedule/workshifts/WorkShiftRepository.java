@@ -41,12 +41,12 @@ public interface WorkShiftRepository extends JpaRepository<WorkShift, Long> {
     );
 
     @Query("""
-       SELECT w FROM WorkShift w
-       WHERE w.userStore.id = :userStoreId
-       AND w.startDatetime < :end
-       AND w.endDatetime > :start
-       ORDER BY w.startDatetime ASC
-       """)
+            SELECT w FROM WorkShift w
+            WHERE w.userStore.id = :userStoreId
+            AND w.startDatetime < :end
+            AND w.endDatetime > :start
+            ORDER BY w.startDatetime ASC
+            """)
     List<WorkShift> findShiftsOverlappingToday(
             @Param("userStoreId") Long userStoreId,
             @Param("start") LocalDateTime start,
@@ -60,6 +60,34 @@ public interface WorkShiftRepository extends JpaRepository<WorkShift, Long> {
             "AND ws.endDatetime >= :start")
     void deleteOverlappingShifts(
             @Param("storeId") Long storeId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
+
+    /**
+     * 특정 매장의 특정 기간 내 모든 WorkShift 조회 (급여 계산용)
+     */
+    @Query("SELECT w FROM WorkShift w " +
+            "WHERE w.store.id = :storeId " +
+            "AND w.startDatetime >= :start " +
+            "AND w.startDatetime < :end " +
+            "ORDER BY w.userStore.id, w.startDatetime ASC")
+    List<WorkShift> findByStoreIdAndMonthRange(
+            @Param("storeId") Long storeId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
+
+    /**
+     * 특정 UserStore의 특정 기간 내 모든 WorkShift 조회 (개인 급여 계산용)
+     */
+    @Query("SELECT w FROM WorkShift w " +
+            "WHERE w.userStore.id = :userStoreId " +
+            "AND w.startDatetime >= :start " +
+            "AND w.startDatetime < :end " +
+            "ORDER BY w.startDatetime ASC")
+    List<WorkShift> findByUserStoreIdAndMonthRange(
+            @Param("userStoreId") Long userStoreId,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );
