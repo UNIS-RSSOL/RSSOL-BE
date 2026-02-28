@@ -8,7 +8,6 @@ import java.time.LocalDate;
 @Getter
 @AllArgsConstructor
 public class ViewAttendanceDayDto {
-
     private LocalDate workDate;
     private String attendanceStatus; // OFF, ABSENT, LATE, NORMAL
 }

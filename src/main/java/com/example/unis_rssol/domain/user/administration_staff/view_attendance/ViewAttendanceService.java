@@ -45,6 +45,9 @@ public class ViewAttendanceService {
             throw new IllegalArgumentException("ACCESS_DENIED");
         }
 
+        String staffName = userStore.getUser().getUsername();
+        String role = userStore.getPosition().name();
+
         List<Attendance> attendanceList =
                 attendanceRepository.findByUserStoreIdAndWorkDateBetween(
                         userStoreId, startDate, endDate
@@ -52,7 +55,7 @@ public class ViewAttendanceService {
 
         List<WorkShift> shiftList =
                 workShiftRepository.findMyShifts(
-                        userStore.getUser().getId(),  // userId 유지
+                        userStore.getUser().getId(),
                         startDate.atStartOfDay(),
                         endDate.atTime(23, 59, 59)
                 );
@@ -69,19 +72,33 @@ public class ViewAttendanceService {
 
         List<ViewAttendanceDayDto> result = new ArrayList<>();
 
-        for (LocalDate date = startDate;
-             !date.isAfter(endDate);
-             date = date.plusDays(1)) {
+        int lateCount = 0;
+        int absentCount = 0;
+
+        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
 
             WorkShift shift = shiftMap.get(date);
             Attendance attendance = attendanceMap.get(date);
 
-            result.add(new ViewAttendanceDayDto(date,
-                    resolveAttendance(shift, attendance)));
+            String status = resolveAttendance(shift, attendance);
+
+            if ("LATE".equals(status)) {
+                lateCount++;
+            }
+
+            if ("ABSENT".equals(status)) {
+                absentCount++;
+            }
+
+            result.add(new ViewAttendanceDayDto(date, status));
         }
 
         return new ViewAttendanceResponse(
                 userStoreId,
+                staffName,
+                role,
+                lateCount,
+                absentCount,
                 startDate,
                 endDate,
                 result
@@ -90,14 +107,17 @@ public class ViewAttendanceService {
 
     private String resolveAttendance(WorkShift shift, Attendance attendance) {
 
-        if (shift == null) return "OFF";
+        if (shift == null) {
+            return "OFF";
+        }
 
-        if (attendance == null || !attendance.isCheckedIn())
+        if (attendance == null || !attendance.isCheckedIn()) {
             return "ABSENT";
+        }
 
-        if (attendance.getCheckInTime()
-                .isAfter(shift.getStartDatetime()))
+        if (attendance.getCheckInTime().isAfter(shift.getStartDatetime())) {
             return "LATE";
+        }
 
         return "NORMAL";
     }
