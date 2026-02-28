@@ -11,7 +11,14 @@ import java.util.List;
 public class ViewAttendanceResponse {
 
     private Long userStoreId;
+
+    private String staffName;
+    private String role;
+    private int totalLateCount;
+    private int totalAbsentCount;
+
     private LocalDate startDate;
     private LocalDate endDate;
+
     private List<ViewAttendanceDayDto> attendances;
 }
