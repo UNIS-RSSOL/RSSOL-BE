@@ -193,6 +193,7 @@ public class PayrollService {
             }
 
             StaffSummaryDto summary = StaffSummaryDto.builder()
+                    .userStoreId(staff.getId())
                     .username(user.getUsername())
                     .profileImageUrl(user.getProfileImageUrl())
                     .role(staff.getPosition().name())

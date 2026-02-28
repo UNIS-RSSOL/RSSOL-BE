@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class StaffSummaryDto {
-
+    private Long userStoreId;           //직원-매장 매핑 id
     private String username;            // 직원 이름
     private String profileImageUrl;     // 프로필 사진 URL
     private String role;                // 역할 (OWNER, STAFF 등)
