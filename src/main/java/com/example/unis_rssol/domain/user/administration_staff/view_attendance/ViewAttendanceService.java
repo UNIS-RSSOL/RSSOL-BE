@@ -75,6 +75,7 @@ public class ViewAttendanceService {
 
         List<ViewAttendanceDayDto> result = new ArrayList<>();
 
+        int normalCount = 0;
         int lateCount = 0;
         int absentCount = 0;
 
@@ -84,6 +85,10 @@ public class ViewAttendanceService {
             Attendance attendance = attendanceMap.get(date);
 
             String status = resolveAttendance(shift, attendance);
+
+            if ("NORMAL".equals(status)) {
+                normalCount++;
+            }
 
             if ("LATE".equals(status)) {
                 lateCount++;
@@ -100,6 +105,7 @@ public class ViewAttendanceService {
                 userStoreId,
                 staffName,
                 role,
+                normalCount,
                 lateCount,
                 absentCount,
                 startDate,

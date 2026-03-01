@@ -14,6 +14,7 @@ public class ViewAttendanceResponse {
 
     private String staffName;
     private String role;
+    private int totalAttendance;
     private int totalLateCount;
     private int totalAbsentCount;
 
