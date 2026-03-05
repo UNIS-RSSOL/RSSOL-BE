@@ -84,7 +84,8 @@ public class SecurityConfig {
                 "https://connecti.store",
                 "http://localhost:3000",
                 "http://localhost:5173",
-                "https://rssolplan.com"
+                "https://rssolplan.com",
+                "https://www.rssolplan.com"
         ));
 
         // 허용 메서드
