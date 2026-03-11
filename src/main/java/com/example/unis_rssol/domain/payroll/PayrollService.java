@@ -741,6 +741,9 @@ public class PayrollService {
                 .add(totalHolidayPay)
                 .add(weeklyAllowance);
 
+        // 정상 출근 횟수 = 총 근무일 - 결근 횟수 (지각도 출근으로 간주)
+        int attendanceCount = shifts.size() - absenceCount;
+
         return StaffPayrollResponseDto.builder()
                 .userStoreId(staff.getId())
                 .staffName(staff.getUser().getUsername())
@@ -758,6 +761,7 @@ public class PayrollService {
                 .weeklyAllowance(weeklyAllowance)
                 .totalPay(totalPay)
                 .totalShiftCount(shifts.size())
+                .attendanceCount(attendanceCount)
                 .lateCount(lateCount)
                 .absenceCount(absenceCount)
                 .build();
@@ -897,6 +901,9 @@ public class PayrollService {
 
         Store store = userStore.getStore();
 
+        // 정상 출근 횟수 = 총 근무일 - 결근 횟수 (지각도 출근으로 간주)
+        int attendanceCount = shifts.size() - absenceCount;
+
         return StaffMyPayrollResponseDto.builder()
                 .storeId(store.getId())
                 .storeName(store.getName())
@@ -916,6 +923,7 @@ public class PayrollService {
                 .weeklyAllowance(weeklyAllowance)
                 .totalPay(totalPay)
                 .totalShiftCount(shifts.size())
+                .attendanceCount(attendanceCount)
                 .lateCount(lateCount)
                 .absenceCount(absenceCount)
                 .build();
@@ -923,7 +931,6 @@ public class PayrollService {
 
     /**
      * 주휴수당 계산 (결근 고려)
-     *
      * 한국 근로기준법 기준:
      * - 조건: 주 15시간 이상 근무, 해당 주에 결근 없음
      * - 계산: (주 소정근로시간 ÷ 40) × 8 × 시급, 최대 8시간분

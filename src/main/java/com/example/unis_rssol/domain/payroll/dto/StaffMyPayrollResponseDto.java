@@ -45,6 +45,7 @@ public class StaffMyPayrollResponseDto {
 
     // 근무 현황
     private int totalShiftCount;        // 총 근무 일수
+    private int attendanceCount;        // 정상 출근 횟수 (정시 + 지각, 즉 실제 출근한 횟수)
     private int lateCount;              // 지각 횟수
     private int absenceCount;           // 결근 횟수
 }
