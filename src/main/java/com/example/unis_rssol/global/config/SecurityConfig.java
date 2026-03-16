@@ -84,6 +84,7 @@ public class SecurityConfig {
                 "https://connecti.store",
                 "http://localhost:3000",
                 "http://localhost:5173",
+                "http://localhost:8080",
                 "https://rssolplan.com",
                 "https://www.rssolplan.com"
         ));
