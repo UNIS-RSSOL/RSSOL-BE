@@ -1,5 +1,8 @@
 package com.example.unis_rssol.domain.schedule.generation;
 
+import com.example.unis_rssol.global.security.AuthorizationService;
+import com.example.unis_rssol.global.security.annotation.OwnerOnly;
+import com.example.unis_rssol.global.exception.ForbiddenException;
 import com.example.unis_rssol.domain.schedule.generation.dto.ScheduleGenerationRequestDto;
 import com.example.unis_rssol.domain.schedule.generation.dto.ScheduleGenerationResponseDto;
 import com.example.unis_rssol.domain.schedule.generation.dto.ScheduleRequestDto;
@@ -23,6 +26,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ScheduleGenerationController {
     private final ScheduleGenerationService service;
+    private final AuthorizationService authService;
 
     /**
      * 1. 스케줄 요청 (알바생에게 근무 가능 시간 입력 요청)
@@ -76,10 +80,17 @@ public class ScheduleGenerationController {
     /**
      * 제출 현황 확인 (미제출 직원 목록)
      */
+    @OwnerOnly
     @GetMapping("/requests/{storeId}/submission-status")
     public ResponseEntity<Map<String, Object>> checkSubmissionStatus(
             @AuthenticationPrincipal Long userId,
             @PathVariable Long storeId) {
+
+        Long activeStoreId = authService.getActiveStoreIdOrThrow(userId);
+        if (!activeStoreId.equals(storeId)) {
+            throw new ForbiddenException("해당 매장의 정보를 조회할 권한이 없습니다.");
+        }
+
         List<Long> unsubmitted = service.validateAllSubmitted(storeId);
         return ResponseEntity.ok(Map.of(
                 "allSubmitted", unsubmitted.isEmpty(),
