@@ -46,5 +46,8 @@ public class EmployeePayrollDto {
     private int totalShiftCount;        // 총 근무 일수
     private int lateCount;              // 지각 횟수
     private int absenceCount;           // 결근 횟수
+
+    // 급여 지급 정보
+    private boolean isPaid;             // 급여 지급 여부
 }
 
