@@ -58,6 +58,7 @@ public class PayrollService {
     private final StoreRepository storeRepository;
     private final AttendanceRepository attendanceRepository;
     private final BankAccountRepository bankAccountRepository;
+    private final PaymentRecordRepository paymentRecordRepository;
 
     // 5인 이상 사업장 여부 (추후 Store 설정으로 관리 가능)
     private static final boolean DEFAULT_FIVE_OR_MORE = true;
@@ -518,6 +519,12 @@ public class PayrollService {
                 .add(totalHolidayPay)
                 .add(weeklyHolidayPay);
 
+        // 지급 기록 조회
+        boolean isPaid = paymentRecordRepository
+                .findByUserStore_IdAndYearAndMonth(staff.getId(), year, month)
+                .map(PaymentRecord::isPaid)
+                .orElse(false);
+
         return EmployeePayrollDto.builder()
                 .userStoreId(staff.getId())
                 .userId(user.getId())
@@ -541,6 +548,7 @@ public class PayrollService {
                 .totalShiftCount(shifts.size())
                 .lateCount(lateCount)
                 .absenceCount(absenceCount)
+                .isPaid(isPaid)
                 .build();
     }
 
@@ -1199,6 +1207,68 @@ public class PayrollService {
                 .orElseGet(() -> minimumWageRepository.findCurrentMinimumWage()
                         .map(MinimumWage::getHourlyWage)
                         .orElse(LaborLawConstants.FALLBACK_MINIMUM_WAGE));
+    }
+
+    // ==================== 급여 지급 여부 관련 (PaymentRecord) ====================
+
+    /**
+     * OWNER: 직원 급여 지급 여부 업데이트 (체크박스 토글)
+     * <p>
+     * StorePayrollSummaryDto 조회 시 EmployeePayrollDto에 isPaid 정보가 포함되어 있고,
+     * 체크박스 클릭 시 이 API를 호출하여 지급 상태를 변경
+     *
+     * @param userId      현재 로그인 사용자 ID (OWNER)
+     * @param userStoreId 직원의 UserStore ID
+     * @param year        년도
+     * @param month       월
+     * @param isPaid      지급 여부
+     * @return 업데이트된 지급 기록
+     */
+    @Transactional
+    public PaymentRecordDto updatePaymentStatus(Long userId, Long userStoreId, int year, int month, boolean isPaid) {
+        // 직원 정보 조회
+        UserStore userStore = userStoreRepository.findById(userStoreId)
+                .orElseThrow(() -> new NotFoundException("직원 정보를 찾을 수 없습니다."));
+
+        Long storeId = userStore.getStore().getId();
+
+        // OWNER 권한 확인
+        UserStore ownerUserStore = userStoreRepository.findByUser_IdAndStore_Id(userId, storeId)
+                .orElseThrow(() -> new ForbiddenException("해당 매장에 대한 권한이 없습니다."));
+
+        if (ownerUserStore.getPosition() != UserStore.Position.OWNER) {
+            throw new ForbiddenException("급여 지급 관리는 OWNER만 가능합니다.");
+        }
+
+        // 지급 기록 조회 또는 생성
+        PaymentRecord record = paymentRecordRepository
+                .findByUserStore_IdAndYearAndMonth(userStoreId, year, month)
+                .orElseGet(() -> PaymentRecord.builder()
+                        .userStore(userStore)
+                        .year(year)
+                        .month(month)
+                        .build());
+
+        // 지급 상태 업데이트
+        record.updatePaymentStatus(isPaid, userId);
+        PaymentRecord savedRecord = paymentRecordRepository.save(record);
+
+        log.info("💳 [급여지급] userStoreId={}, {}/{} isPaid={} by Owner={}",
+                userStoreId, year, month, isPaid, userId);
+
+        return PaymentRecordDto.builder()
+                .paymentRecordId(savedRecord.getId())
+                .userStoreId(savedRecord.getUserStore().getId())
+                .userId(savedRecord.getUserStore().getUser().getId())
+                .username(savedRecord.getUserStore().getUser().getUsername())
+                .storeId(savedRecord.getUserStore().getStore().getId())
+                .storeName(savedRecord.getUserStore().getStore().getName())
+                .year(savedRecord.getYear())
+                .month(savedRecord.getMonth())
+                .isPaid(savedRecord.isPaid())
+                .paidAt(savedRecord.getPaidAt())
+                .paidByUserId(savedRecord.getPaidByUserId())
+                .build();
     }
 }
 

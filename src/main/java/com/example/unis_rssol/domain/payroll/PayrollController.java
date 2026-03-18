@@ -286,5 +286,35 @@ public class PayrollController {
         StoreStaffWagesResponseDto wages = payrollService.getAllStaffWages(userId);
         return ResponseEntity.ok(wages);
     }
+
+    // ==================== 급여 지급 여부 관리 ====================
+
+    /**
+     * OWNER: 직원 급여 지급 여부 업데이트 (체크박스)
+     * <p>
+     * StorePayrollSummaryDto 조회 → 각 직원 옆 체크박스 클릭 → 이 API 호출
+     *
+     * @param userId      현재 로그인 사용자 ID
+     * @param userStoreId 직원의 UserStore ID
+     * @param year        년도
+     * @param month       월
+     * @param isPaid      지급 여부 (true: 지급함, false: 미지급)
+     * @return 업데이트된 지급 기록
+     */
+    @PatchMapping("/store/summary/{userStoreId}")
+    @OwnerOnly
+    public ResponseEntity<PaymentRecordDto> updatePaymentStatus(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long userStoreId,
+            @RequestParam int year,
+            @RequestParam int month,
+            @RequestParam boolean isPaid
+    ) {
+        log.info("✅ [급여지급] OWNER userId={} 직원 userStoreId={} {}/{} isPaid={}",
+                userId, userStoreId, year, month, isPaid);
+
+        PaymentRecordDto record = payrollService.updatePaymentStatus(userId, userStoreId, year, month, isPaid);
+        return ResponseEntity.ok(record);
+    }
 }
 
