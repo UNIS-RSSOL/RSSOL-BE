@@ -110,6 +110,21 @@ public class PayrollService {
         for (UserStore staff : staffList) {
             List<WorkShift> staffShifts = shiftsByUserStore.getOrDefault(staff.getId(), Collections.emptyList());
             StaffPayrollResponseDto staffPayroll = calculateStaffPayroll(staff, staffShifts, year, month);
+
+            // 은행 계좌 정보 조회 및 추가
+            User user = staff.getUser();
+            BankAccount bankAccount = bankAccountRepository.findTopByUserIdOrderByIdDesc(user.getId())
+                    .orElse(null);
+
+            if (bankAccount != null) {
+                String bankName = bankAccount.getBank() != null ? bankAccount.getBank().getBankName() : null;
+                String accountNumber = bankAccount.getAccountNumber();
+
+                staffPayroll.setBankName(bankName);
+                staffPayroll.setAccountNumber(accountNumber);
+            }
+
+
             staffPayrolls.add(staffPayroll);
 
             totalBasePay = totalBasePay.add(staffPayroll.getBasePay());

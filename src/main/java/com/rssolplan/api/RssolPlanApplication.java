@@ -4,10 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class UnisRssolApplication {
+public class RssolPlanApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(UnisRssolApplication.class, args);
+		SpringApplication.run(RssolPlanApplication.class, args);
 
 	}
 

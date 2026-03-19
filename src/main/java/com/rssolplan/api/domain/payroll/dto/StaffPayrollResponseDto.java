@@ -1,9 +1,6 @@
 package com.rssolplan.api.domain.payroll.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 
@@ -15,6 +12,7 @@ import java.math.BigDecimal;
  * - 직원 이름, 시급, 총 근무시간, 각종 수당 등 월별 급여 상세 정보 전달
  */
 @Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -45,5 +43,9 @@ public class StaffPayrollResponseDto {
     private int attendanceCount;        // 정상 출근 횟수 (정시 + 지각, 즉 실제 출근한 횟수)
     private int lateCount;              // 지각 횟수
     private int absenceCount;           // 결근 횟수
+
+    // 은행 정보
+    private String bankName;            // 은행명
+    private String accountNumber;       // 계좌번호
 }
 
