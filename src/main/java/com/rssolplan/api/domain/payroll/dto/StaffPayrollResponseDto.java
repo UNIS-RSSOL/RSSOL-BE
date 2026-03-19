@@ -1,0 +1,51 @@
+package com.rssolplan.api.domain.payroll.dto;
+
+import lombok.*;
+
+import java.math.BigDecimal;
+
+/**
+ * [생성 이유]
+ * 개별 직원의 월별 급여 정보를 전달하기 위함.
+ * <p>
+ * [역할]
+ * - 직원 이름, 시급, 총 근무시간, 각종 수당 등 월별 급여 상세 정보 전달
+ */
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class StaffPayrollResponseDto {
+
+    private Long userStoreId;           // UserStore ID
+    private String staffName;           // 직원 이름
+    private int hourlyWage;             // 시급
+
+    // 근무 시간 (분 단위)
+    private long totalWorkMinutes;      // 총 근무 시간
+    private long breakMinutes;          // 총 휴게 시간
+    private long overtimeMinutes;       // 총 연장 근무 시간
+    private long nightWorkMinutes;      // 총 야간 근무 시간
+    private long holidayWorkMinutes;    // 총 휴일 근무 시간
+    private long lateMinutes;           // 총 지각 시간 (분)
+
+    // 수당 금액
+    private BigDecimal basePay;         // 기본급
+    private BigDecimal overtimePay;     // 연장수당
+    private BigDecimal nightPay;        // 야간수당
+    private BigDecimal holidayPay;      // 휴일수당
+    private BigDecimal weeklyAllowance; // 주휴수당
+    private BigDecimal totalPay;        // 총 급여
+
+    // 출근 정보
+    private int totalShiftCount;        // 총 근무 일수
+    private int attendanceCount;        // 정상 출근 횟수 (정시 + 지각, 즉 실제 출근한 횟수)
+    private int lateCount;              // 지각 횟수
+    private int absenceCount;           // 결근 횟수
+
+    // 은행 정보
+    private String bankName;            // 은행명
+    private String accountNumber;       // 계좌번호
+}
+
