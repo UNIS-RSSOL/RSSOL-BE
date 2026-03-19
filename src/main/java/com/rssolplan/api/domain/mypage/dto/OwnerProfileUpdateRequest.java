@@ -1,0 +1,13 @@
+package com.rssolplan.api.domain.mypage.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter @Setter @AllArgsConstructor @NoArgsConstructor
+public class OwnerProfileUpdateRequest {
+    private String username;                   // 닉네임
+    private String email;                      // 이메일
+    private String businessRegistrationNumber; // 활성 매장 기준 사업자등록번호 수정
+}
