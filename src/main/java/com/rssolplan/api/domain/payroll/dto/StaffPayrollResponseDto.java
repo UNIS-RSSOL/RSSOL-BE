@@ -21,6 +21,7 @@ public class StaffPayrollResponseDto {
     private Long userStoreId;           // UserStore ID
     private String staffName;           // 직원 이름
     private int hourlyWage;             // 시급
+    private String profileImageUrl;     // 프로필 이미지 URL
 
     // 근무 시간 (분 단위)
     private long totalWorkMinutes;      // 총 근무 시간
@@ -47,5 +48,7 @@ public class StaffPayrollResponseDto {
     // 은행 정보
     private String bankName;            // 은행명
     private String accountNumber;       // 계좌번호
-}
 
+    // 지급 여부
+    private boolean isPaid;             // 급여 지급 여부
+}
