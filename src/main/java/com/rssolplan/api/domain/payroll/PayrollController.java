@@ -120,6 +120,7 @@ public class PayrollController {
      * @param month  조회 월 (기본값: 현재 월)
      * @return 매장 전체 급여 요약 (StorePayrollSummaryDto)
      */
+    @Deprecated
     @OwnerOnly
     @GetMapping("/store/total")
     public ResponseEntity<StorePayrollSummaryDto> getStorePayrollTotal(
