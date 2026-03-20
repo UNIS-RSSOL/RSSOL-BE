@@ -767,10 +767,17 @@ public class PayrollService {
         // 정상 출근 횟수 = 총 근무일 - 결근 횟수 (지각도 출근으로 간주)
         int attendanceCount = shifts.size() - absenceCount;
 
+        // 지급 기록 조회 (isPaid)
+        boolean isPaid = paymentRecordRepository
+                .findByUserStore_IdAndYearAndMonth(staff.getId(), year, month)
+                .map(PaymentRecord::isPaid)
+                .orElse(false);
+
         return StaffPayrollResponseDto.builder()
                 .userStoreId(staff.getId())
                 .staffName(staff.getUser().getUsername())
                 .hourlyWage(hourlyWage)
+                .profileImageUrl(staff.getUser().getProfileImageUrl())
                 .totalWorkMinutes(totalWorkMinutes)
                 .breakMinutes(totalBreakMinutes)
                 .overtimeMinutes(totalOvertimeMinutes)
@@ -787,6 +794,7 @@ public class PayrollService {
                 .attendanceCount(attendanceCount)
                 .lateCount(lateCount)
                 .absenceCount(absenceCount)
+                .isPaid(isPaid)
                 .build();
     }
 
