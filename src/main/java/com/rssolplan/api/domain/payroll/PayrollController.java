@@ -38,7 +38,7 @@ public class PayrollController {
      * @param month  조회 월 (기본값: 현재 월)
      * @return 매장 급여 요약 (총합계 + 직원별 상세)
      */
-    @GetMapping("/store/summary")
+    @GetMapping("/store/total")
     public ResponseEntity<OwnerPayrollSummaryDto> getStorePayrollSummary(
             @AuthenticationPrincipal Long userId,
             @RequestParam(required = false) Integer year,
@@ -122,7 +122,7 @@ public class PayrollController {
      */
     @Deprecated
     @OwnerOnly
-    @GetMapping("/store/total")
+    @GetMapping("/store/total-temp")
     public ResponseEntity<StorePayrollSummaryDto> getStorePayrollTotal(
             @AuthenticationPrincipal Long userId,
             @RequestParam(required = false) Integer year,
@@ -302,7 +302,7 @@ public class PayrollController {
      * @param isPaid      지급 여부 (true: 지급함, false: 미지급)
      * @return 업데이트된 지급 기록
      */
-    @PatchMapping("/store/summary/{userStoreId}")
+    @PatchMapping("/store/total/{userStoreId}")
     @OwnerOnly
     public ResponseEntity<PaymentRecordDto> updatePaymentStatus(
             @AuthenticationPrincipal Long userId,
