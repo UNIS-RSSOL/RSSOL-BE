@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.rssolplan.api.domain.store.Store;
+import com.rssolplan.api.domain.store.StoreRepository;
 import com.rssolplan.api.global.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import java.util.Optional;
 public class StoreSettingService {
 
     private final StoreSettingRepository storeSettingRepository;
+    private final StoreRepository storeRepository; // 추가: StoreRepository 주입
     private final RedisTemplate<String, Object> redisTemplate;
 
     private static final String TEMP_SETTING_PREFIX = "temp_store_setting:store:";
@@ -73,10 +75,18 @@ public class StoreSettingService {
 
     /**
      * 매장 설정 업데이트 (PATCH) - 시간대만 업데이트
+     * 변경: 기존 getStoreSetting 호출로 NotFoundException이 던져지면 새 설정을 생성하도록 upsert 처리
      */
     @Transactional
     public StoreSetting updateStoreSetting(Long storeId, StoreSettingDto dto) {
-        StoreSetting setting = getStoreSetting(storeId);
+        Optional<StoreSetting> existing = storeSettingRepository.findByStoreId(storeId);
+        if (existing.isEmpty()) {
+            Store store = storeRepository.findById(storeId)
+                    .orElseThrow(() -> new NotFoundException("매장을 찾을 수 없습니다."));
+            return createStoreSetting(store, dto);
+        }
+
+        StoreSetting setting = existing.get();
 
         if (dto.getOpenTime() != null) setting.setOpenTime(dto.getOpenTime());
         if (dto.getCloseTime() != null) setting.setCloseTime(dto.getCloseTime());
