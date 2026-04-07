@@ -7,10 +7,12 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.rssolplan.api.domain.notification.NotificationService;
 import com.rssolplan.api.domain.schedule.DayOfWeek;
-import com.rssolplan.api.domain.schedule.generation.dto.*;
+import com.rssolplan.api.domain.schedule.generation.dto.ScheduleGenerationResponseDto;
+import com.rssolplan.api.domain.schedule.generation.dto.ScheduleRequestDto;
+import com.rssolplan.api.domain.schedule.generation.dto.ScheduleRequestResponseDto;
+import com.rssolplan.api.domain.schedule.generation.dto.StaffRequirementDto;
 import com.rssolplan.api.domain.schedule.generation.dto.candidate.CandidateSchedule;
 import com.rssolplan.api.domain.schedule.generation.dto.candidate.CandidateShift;
-import com.rssolplan.api.domain.schedule.generation.dto.candidate.GenerationOptionsDto;
 import com.rssolplan.api.domain.schedule.generation.dto.setting.ScheduleSettingSegmentResponseDto;
 import com.rssolplan.api.domain.schedule.generation.entity.Schedule;
 import com.rssolplan.api.domain.schedule.generation.entity.ScheduleRequest;
@@ -141,8 +143,7 @@ public class ScheduleGenerationService {
     // 3. 스케줄 생성 (후보군 생성)
     // ========================================
     @Transactional
-    public ScheduleGenerationResponseDto generateSchedule(Long userId, Long scheduleRequestId,
-                                                          ScheduleGenerationRequestDto request) {
+    public ScheduleGenerationResponseDto generateSchedule(Long userId, Long scheduleRequestId) {
         Long storeId = authService.getActiveStoreIdOrThrow(userId);
 
         ScheduleRequest scheduleRequest = scheduleRequestRepository.findById(scheduleRequestId)
@@ -161,9 +162,8 @@ public class ScheduleGenerationService {
         // 설정 조회 (StoreSetting 또는 Redis 임시 설정)
         ScheduleSettingSnapshot settingSnapshot = getSettingSnapshot(scheduleRequest);
 
-        // 전략 기반 후보 스케줄 생성
-        GenerationOptionsDto options = request.getGenerationOptions();
-        List<CandidateSchedule> candidates = generateCandidatesWithStrategies(storeId, settingSnapshot, options);
+        // 전략 기반 후보 스케줄 생성 - 항상 모든 등록된 전략 사용
+        List<CandidateSchedule> candidates = generateCandidatesWithStrategies(storeId, settingSnapshot);
 
         // Redis에 후보 저장
         String redisKey = saveCandidateSchedulesToRedis(storeId, candidates);
@@ -310,12 +310,11 @@ public class ScheduleGenerationService {
 
     /**
      * 전략 패턴 기반 후보 스케줄 생성
-     * - 각 전략별로 1개의 후보 스케줄 생성
-     * - 기본: 4가지 전략 모두 사용 (BALANCED, COVERAGE_FIRST, SENIOR_PRIORITY, FAIR_DISTRIBUTION)
+     * - 모든 등록된 전략을 사용하여 다양한 대안 생성
+     * - 기본: Balanced, Coverage First, Senior Priority, Fair Distribution 4가지 전략
      */
     public List<CandidateSchedule> generateCandidatesWithStrategies(Long storeId,
-                                                                    ScheduleSettingSnapshot settings,
-                                                                    GenerationOptionsDto options) {
+                                                                    ScheduleSettingSnapshot settings) {
         // 근무 가능자 로드
         List<WorkAvailability> availabilities = workAvailabilityRepository.findByUserStore_Store_Id(storeId);
         if (availabilities.isEmpty()) {
@@ -339,8 +338,8 @@ public class ScheduleGenerationService {
                         us -> us.getHireDate() != null ? us.getHireDate() : LocalDate.now()
                 ));
 
-        // 사용할 전략 결정
-        List<ScheduleGenerationStrategy> strategiesToUse = getStrategiesToUse(options);
+        // 사용할 전략 결정 - 항상 모든 전략 사용
+        List<ScheduleGenerationStrategy> strategiesToUse = getStrategiesToUse();
 
         List<CandidateSchedule> candidateSchedules = new ArrayList<>();
 
@@ -375,57 +374,17 @@ public class ScheduleGenerationService {
 
     /**
      * 사용할 전략 목록 결정
-     * 1. 항상 최소 4개 이상의 후보 생성
-     * 2. 요청에 보낸 전략을 최우선으로 적용
-     * 3. 나머지는 요청에 없는 전략들을 순차적으로 적용
+     * - 항상 모든 등록된 4가지 전략을 사용하여 다양한 대안 제시
+     * - 확장성: 새로운 전략 추가 시 필드 주입 및 add() 호출만 추가
      */
-    private List<ScheduleGenerationStrategy> getStrategiesToUse(GenerationOptionsDto options) {
-        // 모든 전략 맵
-        Map<GenerationOptionsDto.GenerationStrategy, ScheduleGenerationStrategy> strategyMap = Map.of(
-                GenerationOptionsDto.GenerationStrategy.BALANCED, balancedStrategy,
-                GenerationOptionsDto.GenerationStrategy.COVERAGE_FIRST, coverageFirstStrategy,
-                GenerationOptionsDto.GenerationStrategy.SENIOR_PRIORITY, seniorPriorityStrategy,
-                GenerationOptionsDto.GenerationStrategy.FAIR_DISTRIBUTION, fairDistributionStrategy
-        );
-
-        // 전체 전략 순서 (기본 순서)
-        List<GenerationOptionsDto.GenerationStrategy> allStrategyOrder = List.of(
-                GenerationOptionsDto.GenerationStrategy.BALANCED,
-                GenerationOptionsDto.GenerationStrategy.COVERAGE_FIRST,
-                GenerationOptionsDto.GenerationStrategy.SENIOR_PRIORITY,
-                GenerationOptionsDto.GenerationStrategy.FAIR_DISTRIBUTION
-        );
-
+    private List<ScheduleGenerationStrategy> getStrategiesToUse() {
         List<ScheduleGenerationStrategy> result = new ArrayList<>();
+        result.add(balancedStrategy);
+        result.add(coverageFirstStrategy);
+        result.add(seniorPriorityStrategy);
+        result.add(fairDistributionStrategy);
 
-        // 1. 요청에 보낸 전략을 최우선으로 추가
-        Set<GenerationOptionsDto.GenerationStrategy> requestedStrategies = new LinkedHashSet<>();
-        if (options != null && options.getStrategies() != null && !options.getStrategies().isEmpty()) {
-            for (GenerationOptionsDto.GenerationStrategy strategy : options.getStrategies()) {
-                if (strategyMap.containsKey(strategy)) {
-                    result.add(strategyMap.get(strategy));
-                    requestedStrategies.add(strategy);
-                }
-            }
-        }
-
-        // 2. 요청에 없는 전략들을 순차적으로 추가
-        List<ScheduleGenerationStrategy> remainingStrategies = new ArrayList<>();
-        for (GenerationOptionsDto.GenerationStrategy strategy : allStrategyOrder) {
-            if (!requestedStrategies.contains(strategy)) {
-                remainingStrategies.add(strategyMap.get(strategy));
-            }
-        }
-
-        // 3. 최소 4개 보장 (요청 전략 + 나머지 전략으로 채움)
-        int minCount = 4;
-        int needed = minCount - result.size();
-
-        for (int i = 0; i < needed && i < remainingStrategies.size(); i++) {
-            result.add(remainingStrategies.get(i));
-        }
-
-        log.info("📋 생성할 후보 수: {}, 사용 전략: {}",
+        log.info("📋 생성할 후보 수: {} (모든 등록된 전략 사용), 사용 전략: {}",
                 result.size(),
                 result.stream().map(ScheduleGenerationStrategy::getStrategyName).toList());
 

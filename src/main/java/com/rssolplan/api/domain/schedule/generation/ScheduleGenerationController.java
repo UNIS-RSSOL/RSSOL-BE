@@ -1,6 +1,5 @@
 package com.rssolplan.api.domain.schedule.generation;
 
-import com.rssolplan.api.domain.schedule.generation.dto.ScheduleGenerationRequestDto;
 import com.rssolplan.api.domain.schedule.generation.dto.ScheduleGenerationResponseDto;
 import com.rssolplan.api.domain.schedule.generation.dto.ScheduleRequestDto;
 import com.rssolplan.api.domain.schedule.generation.dto.ScheduleRequestResponseDto;
@@ -46,9 +45,8 @@ public class ScheduleGenerationController {
     @PostMapping("/requests/{scheduleRequestId}/generate")
     public ResponseEntity<ScheduleGenerationResponseDto> generateSchedule(
             @AuthenticationPrincipal Long userId,
-            @PathVariable Long scheduleRequestId,
-            @RequestBody ScheduleGenerationRequestDto request) {
-        ScheduleGenerationResponseDto response = service.generateSchedule(userId, scheduleRequestId, request);
+            @PathVariable Long scheduleRequestId) {
+        ScheduleGenerationResponseDto response = service.generateSchedule(userId, scheduleRequestId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
