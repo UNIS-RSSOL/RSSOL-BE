@@ -111,4 +111,6 @@ jobs:
               -e "KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}" \
               -e "REDIS_HOST=${{ secrets.REDIS_HOST }}" \
               -e "REDIS_PORT=${{ secrets.REDIS_PORT }}" \
+              -e "MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}" \
+              -e "MMAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}" \
               ${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
