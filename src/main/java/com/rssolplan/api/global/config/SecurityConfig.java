@@ -49,6 +49,7 @@ public class SecurityConfig {
                             "/api/auth/kakao/**",
                             "/api/auth/register",
                             "/error",
+                            "/api/auth/email-verification/**", // 교사용 이메일 인증 엔드포인트
                             // Swagger 관련 경로 모두 허용
                             "/swagger-ui/**",
                             "/v3/api-docs/**",
